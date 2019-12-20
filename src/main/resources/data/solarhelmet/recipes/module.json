@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " r ",
+    "ldl",
+    "ipi"
+  ],
+  "key": {
+    "r": {
+      "tag": "forge:storage_blocks/redstone"
+    },
+    "l": {
+      "tag": "forge:gems/lapis"
+    },
+    "d": {
+      "tag": "forge:gems/diamond"
+    },
+    "p": {
+      "item": "minecraft:paper"
+    },
+    "i": {
+      "tag": "forge:ingots/iron"
+    }
+  },
+  "result": {
+    "item": "solarhelmet:solar_helmet_module"
+  }
+}
