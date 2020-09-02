@@ -1,2 +1,5 @@
+1.1.0:
+    - Update to 1.16.2 (compiled with Forge 33.0.32)
+
 1.0.0:
     - Initial Release

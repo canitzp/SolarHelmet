@@ -1,7 +1,7 @@
 package de.canitzp.solarhelmet;
 
 import com.google.common.collect.Lists;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.DimensionType;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class SolarHelmetConfig{
                 .comment("The dimensions in here are excluded from energy production.")
                 .translation("Dimension blacklist")
                 .worldRestart()
-                .define("dimension_blacklist", Lists.newArrayList(DimensionType.THE_NETHER.getRegistryName().toString(), DimensionType.THE_END.getRegistryName().toString()));
+                .define("dimension_blacklist", Lists.newArrayList(DimensionType.field_242711_b.toString(), DimensionType.field_242712_c.toString()));
             ADDITIONAL_OPAQUE_BLOCKS = builder
                 .comment("Additional blocks where sun in shining completely through.")
                 .translation("Additional opaque blocks")

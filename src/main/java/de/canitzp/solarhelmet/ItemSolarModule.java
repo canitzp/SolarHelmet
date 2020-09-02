@@ -22,6 +22,6 @@ public class ItemSolarModule extends Item {
     @Override
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         super.addInformation(stack, worldIn, tooltip, flagIn);
-        tooltip.add(new TranslationTextComponent("item.solarhelmet:solar_helmet_module.desc").setStyle(new Style().setColor(TextFormatting.GRAY)));
+        tooltip.add(new TranslationTextComponent("item.solarhelmet:solar_helmet_module.desc").func_230530_a_(Style.field_240709_b_.func_240721_b_(TextFormatting.GRAY)));
     }
 }
