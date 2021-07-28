@@ -1,10 +1,12 @@
 package de.canitzp.solarhelmet;
 
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.*;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -15,13 +17,12 @@ import java.util.List;
 public class ItemSolarModule extends Item {
 
     public ItemSolarModule(){
-        super(new Properties().group(SolarHelmet.TAB).maxStackSize(1));
-        this.setRegistryName(SolarHelmet.MODID, "solar_helmet_module");
+        super(new Properties().tab(SolarHelmet.TAB).stacksTo(1));
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        super.addInformation(stack, worldIn, tooltip, flagIn);
-        tooltip.add(new TranslationTextComponent("item.solarhelmet:solar_helmet_module.desc").func_230530_a_(Style.field_240709_b_.func_240721_b_(TextFormatting.GRAY)));
+    public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
+        super.appendHoverText(stack, worldIn, tooltip, flagIn);
+        tooltip.add(new TranslatableComponent("item.solarhelmet:solar_helmet_module.desc").withStyle(ChatFormatting.GRAY));
     }
 }

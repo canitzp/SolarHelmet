@@ -1,3 +1,8 @@
+1.2.0:
+    - Update to 1.17.1 (compiled with Forge 37.0.9)
+    - New recipe registering without access transforming. More safe if helmets with the same names (different modnames) appear.
+    - When a helmet is repaired with the anvil, the solar feature and energy isn't lost anymore
+
 1.1.0:
     - Update to 1.16.2 (compiled with Forge 33.0.32)
 
