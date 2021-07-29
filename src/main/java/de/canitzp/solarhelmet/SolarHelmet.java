@@ -40,6 +40,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fmllegacy.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -52,6 +54,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SolarHelmet{
     
     public static final String MODID = "solarhelmet";
+    
+    private static final Logger LOGGER = LogManager.getLogger(SolarHelmet.MODID);
     
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     public static final RegistryObject<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
@@ -78,19 +82,11 @@ public class SolarHelmet{
     };
     
     public SolarHelmet(){
+        LOGGER.info("Solar Helmet loading...");
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
         
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
-    }
-    
-    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static class ModEvents{
-    
-        @SubscribeEvent
-        public static void registerItems(RegistryEvent.Register<Item> reg){
-            reg.getRegistry().register(SOLAR_MODULE_ITEM.get());
-        }
-    
+        LOGGER.info("Solar Helmet loaded.");
     }
     
     @Mod.EventBusSubscriber
@@ -117,15 +113,17 @@ public class SolarHelmet{
                 if(level.dimension() != Level.OVERWORLD){
                     return;
                 }
+                LOGGER.info("Solar Helmet recipe injecting...");
                 RecipeManager recipeManager = level.getRecipeManager();
     
-                List<Recipe<?>> newRecipes = new ArrayList<>();
-    
+                // list which the old recipes are replaced with. This should include all existing recipes and the new ones, before recipeManager#replaceRecipes is called!
+                List<Recipe<?>> allNewRecipes = new ArrayList<>();
                 for(Item helmet : ForgeRegistries.ITEMS.getValues()){
                     if(SolarHelmet.isItemHelmet(helmet)){
                         // create recipe input
                         NonNullList<Ingredient> recipeInput = NonNullList.create();
                         recipeInput.add(Ingredient.of(SOLAR_MODULE_ITEM.get()));
+                        recipeInput.add(Ingredient.of(helmet));
                         List<String> add_craft_items = SolarHelmetConfig.GENERAL.ADD_CRAFT_ITEMS.get();
                         add_craft_items.stream()
                                        .limit(7)
@@ -180,16 +178,17 @@ public class SolarHelmet{
                         };
     
                         if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingId))){
-                            newRecipes.add(recipe);
-                            System.out.printf("Registering recipes for solar helmet; recipe id: '%s'%n", craftingId);
+                            allNewRecipes.add(recipe);
+                            LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmet.getRegistryName().toString(), craftingId));
                         }
                     }
                 }
                 try{
-                    recipeManager.replaceRecipes(newRecipes);
+                    // add all existing recipes, since we're gonna replace them
+                    allNewRecipes.addAll(recipeManager.getRecipes());
+                    recipeManager.replaceRecipes(allNewRecipes);
                 } catch(IllegalStateException e){
-                    System.err.println("Illegal recipe replacement catched!");
-                    e.printStackTrace();
+                    LOGGER.error("Solar Helmet: Illegal recipe replacement caught! Report this to author immediately!", e);
                 }
             }
         }

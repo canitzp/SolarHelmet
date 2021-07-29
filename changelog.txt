@@ -1,3 +1,6 @@
+1.2.1:
+    - Fixed recipe injection. It should work properly now, I have tested it together with FeederHelmet
+
 1.2.0:
     - Update to 1.17.1 (compiled with Forge 37.0.9)
     - New recipe registering without access transforming. More safe if helmets with the same names (different modnames) appear.
