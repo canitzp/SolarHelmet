@@ -1,6 +1,7 @@
 package de.canitzp.solarhelmet;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,6 +16,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
@@ -31,12 +33,19 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,17 +58,20 @@ public class SolarHelmet{
     
     public static final String MODID = "solarhelmet";
     
-    public static final ItemSolarModule SOLAR_MODULE = new ItemSolarModule();
+    public static final Logger LOGGER = LogManager.getLogger(MODID);
+    
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
+    public static final RegistryObject<ItemSolarModule> SOLAR_MODULE = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
     
     public static final ItemGroup TAB = new ItemGroup(MODID){
         @Override
-        public ItemStack createIcon(){
-            return new ItemStack(SOLAR_MODULE);
+        public ItemStack makeIcon(){
+            return new ItemStack(SOLAR_MODULE.get());
         }
     
         @Override
-        public void fill(NonNullList<ItemStack> stacks){
-            stacks.add(new ItemStack(SOLAR_MODULE));
+        public void fillItemList(NonNullList<ItemStack> stacks){
+            stacks.add(new ItemStack(SOLAR_MODULE.get()));
             for(Item item : ForgeRegistries.ITEMS){
                 if(SolarHelmet.isItemHelmet(item)){
                     ItemStack stack = new ItemStack(item);
@@ -73,17 +85,11 @@ public class SolarHelmet{
     };
     
     public SolarHelmet(){
+        LOGGER.info("Solar Helmet loading...");
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
-    }
     
-    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static class ModEvents{
-    
-        @SubscribeEvent
-        public static void registerItems(RegistryEvent.Register<Item> reg){
-            reg.getRegistry().register(SOLAR_MODULE);
-        }
-    
+        ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        LOGGER.info("Solar Helmet loaded.");
     }
     
     @Mod.EventBusSubscriber
@@ -95,9 +101,9 @@ public class SolarHelmet{
             if(!event.getItemStack().isEmpty()){
                 CompoundNBT nbt = event.getItemStack().getTag();
                 if(nbt != null && nbt.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
-                    event.getToolTip().add(new StringTextComponent(TextFormatting.AQUA.toString() + TextFormatting.ITALIC.toString() + I18n.format("item.solarhelmet:solar_helmet_module_installed.text") + TextFormatting.RESET.toString()));
+                    event.getToolTip().add(new TranslationTextComponent("item.solarhelmet:solar_helmet_module_installed.text").withStyle(TextFormatting.AQUA, TextFormatting.ITALIC));
                     if(SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get() > 0){
-                        event.getToolTip().add(new StringTextComponent(TextFormatting.RED.toString() + I18n.format("item.solarhelmet:solar_helmet_energy.text", nbt.getInt("solar_helmet_energy_stored"), SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()) + TextFormatting.RESET.toString()));
+                        event.getToolTip().add(new TranslationTextComponent("item.solarhelmet:solar_helmet_energy.text", nbt.getInt("solar_helmet_energy_stored"), SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()).withStyle(TextFormatting.RED));
                     }
                 }
             }
@@ -105,89 +111,105 @@ public class SolarHelmet{
     
         @SubscribeEvent
         public static void onWorldLoad(WorldEvent.Load event){
-            IWorld iWorld = event.getWorld();
-            if(iWorld instanceof World){
-                World world = (World) iWorld;
-                RecipeManager recipeManager = world.getRecipeManager();
+            IWorld levelAccessor = event.getWorld();
+            if(levelAccessor.isClientSide()){
+                return;
+            }
+            if(levelAccessor instanceof World){
+                World level = (World) levelAccessor;
+                if(level.dimension() != World.OVERWORLD){
+                    return;
+                }
+                LOGGER.info("Solar Helmet recipe injecting...");
+                RecipeManager recipeManager = level.getRecipeManager();
+    
+                // list which the old recipes are replaced with. This should include all existing recipes and the new ones, before recipeManager#replaceRecipes is called!
+                List<IRecipe<?>> allNewRecipes = new ArrayList<>();
                 NonNullList<Ingredient> ingredients = NonNullList.create();
-                ingredients.add(Ingredient.fromItems(SOLAR_MODULE));
+                ingredients.add(Ingredient.of(SOLAR_MODULE.get()));
                 List<String> add_craft_items = SolarHelmetConfig.GENERAL.ADD_CRAFT_ITEMS.get();
                 add_craft_items.stream()
                                .limit(7)
                                .map(s -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(s)))
                                .filter(Objects::nonNull)
-                               .map(Ingredient::fromItems)
+                               .map(Ingredient::of)
                                .forEach(ingredients::add);
-                Map<ResourceLocation, IRecipe<?>> recipesToInject = new HashMap<>();
-                ForgeRegistries.ITEMS.getValues().stream()
-                                     .filter(SolarHelmet::isItemHelmet)
-                                     .forEach(helmet -> {
-                                         NonNullList<Ingredient> ingredientsCopy = NonNullList.create();
-                                         ingredientsCopy.addAll(ingredients);
-                                         ingredientsCopy.add(Ingredient.fromItems(helmet));
-                                         ItemStack helmetStack = new ItemStack(helmet);
-                                         CompoundNBT nbt = new CompoundNBT();
-                                         nbt.putBoolean("SolarHelmet", true);
-                                         helmetStack.setTag(nbt);
-                                         ResourceLocation craftingId = new ResourceLocation(MODID, "solar_helmet_" + helmet.getRegistryName().getPath());
-                                         ShapelessRecipe recipe = new ShapelessRecipe(craftingId, "", helmetStack, ingredientsCopy){
-                                             @Nonnull
-                                             @Override
-                                             public ItemStack getCraftingResult(CraftingInventory inv){
-                                                 CompoundNBT nbt = new CompoundNBT();
-                                                 for(int i = 0; i < inv.getSizeInventory(); i++){
-                                                     ItemStack stack = inv.getStackInSlot(i);
-                                                     if(!stack.isEmpty() && stack.getItem() instanceof ArmorItem){
-                                                         if(stack.hasTag()){
-                                                             nbt = stack.getTag();
-                                                         }
-                                                     }
-                                                 }
-                                                 ItemStack out = super.getCraftingResult(inv);
-                                                 nbt.putBoolean("SolarHelmet", true);
-                                                 out.setTag(nbt);
-                                                 return out;
-                                             }
-            
-                                             @Override
-                                             public boolean matches(CraftingInventory inv, World worldIn){
-                                                 if(super.matches(inv, worldIn)){
-                                                     for(int i = 0; i < inv.getSizeInventory(); i++){
-                                                         ItemStack stack = inv.getStackInSlot(i);
-                                                         if(!stack.isEmpty() && stack.getItem() instanceof ArmorItem){
-                                                             CompoundNBT nbt = stack.getTag();
-                                                             if(nbt != null && nbt.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
-                                                                 return false;
-                                                             }
-                                                         }
-                                                     }
-                                                 }
-                                                 return super.matches(inv, worldIn);
-                                             }
-                                         };
-                                         if(recipeManager.getKeys().noneMatch(resourceLocation -> resourceLocation.equals(craftingId))){
-                                             recipesToInject.put(craftingId, recipe);
-                                         }
-                                     });
-                Map<IRecipeType<?>, Map<ResourceLocation, IRecipe<?>>> map = new HashMap<>(recipeManager.recipes);
-                Map<ResourceLocation, IRecipe<?>> craftingRecipes = new HashMap<>(map.getOrDefault(IRecipeType.CRAFTING, Collections.emptyMap()));
-                craftingRecipes.putAll(recipesToInject);
-                map.put(IRecipeType.CRAFTING, ImmutableMap.copyOf(craftingRecipes));
-                recipeManager.recipes = ImmutableMap.copyOf(map);
+                for(Item item : ForgeRegistries.ITEMS){
+                    if(!isItemHelmet(item)){
+                        continue;
+                    }
+    
+                    NonNullList<Ingredient> specififcIngredients = NonNullList.create();
+                    specififcIngredients.addAll(ingredients);
+                    specififcIngredients.add(Ingredient.of(item));
+                    
+                    ItemStack output = item.getDefaultInstance();
+                    CompoundNBT nbt = new CompoundNBT();
+                    nbt.putBoolean("SolarHelmet", true);
+                    output.setTag(nbt);
+    
+                    ResourceLocation craftingId = new ResourceLocation(MODID, "solar_helmet_" + item.getRegistryName().getNamespace() + "_" + item.getRegistryName().getPath());
+    
+                    ShapelessRecipe recipe = new ShapelessRecipe(craftingId, "", output, specififcIngredients){
+                        @Nonnull
+                        @Override
+                        public ItemStack assemble(CraftingInventory inv){
+                            CompoundNBT nbt = new CompoundNBT();
+                            for(int i = 0; i < inv.getContainerSize(); i++){
+                                ItemStack stack = inv.getItem(i);
+                                if(!stack.isEmpty() && stack.getItem() instanceof ArmorItem){
+                                    if(stack.hasTag()){
+                                        nbt = stack.getTag();
+                                    }
+                                }
+                            }
+                            ItemStack out = super.assemble(inv);
+                            nbt.putBoolean("SolarHelmet", true);
+                            out.setTag(nbt);
+                            return out;
+                        }
+        
+                        @Override
+                        public boolean matches(CraftingInventory inv, World worldIn){
+                            if(super.matches(inv, worldIn)){
+                                for(int i = 0; i < inv.getContainerSize(); i++){
+                                    ItemStack stack = inv.getItem(i);
+                                    if(!stack.isEmpty() && stack.getItem() instanceof ArmorItem){
+                                        CompoundNBT nbt = stack.getTag();
+                                        if(nbt != null && nbt.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+                            return super.matches(inv, worldIn);
+                        }
+                    };
+                    if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingId))){
+                        allNewRecipes.add(recipe);
+                    }
+                }
+                try{
+                    // add all existing recipes, since we're gonna replace them
+                    allNewRecipes.addAll(recipeManager.getRecipes());
+                    replaceRecipes(recipeManager, allNewRecipes);
+                } catch(IllegalStateException e){
+                    LOGGER.error("Solar Helmet: Illegal recipe replacement caught! Report this to author immediately!", e);
+                }
             }
         }
     
         @SubscribeEvent
         public static void updatePlayer(TickEvent.PlayerTickEvent event){
-            if(event.phase == TickEvent.Phase.END && !event.player.world.isRemote()){
+            if(event.phase == TickEvent.Phase.END && !event.player.level.isClientSide()){
                 PlayerInventory inv = event.player.inventory;
-                ItemStack helmet = inv.armorInventory.get(EquipmentSlotType.HEAD.getIndex());
+                ItemStack helmet = inv.armor.get(EquipmentSlotType.HEAD.getIndex());
                 if(!helmet.isEmpty() && helmet.hasTag() && isItemHelmet(helmet.getItem())){
                     CompoundNBT nbt = helmet.getTag();
                     if(nbt.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
                         if(isInRightDimension(event.player)){ // Produce energy
                             int sunlightValue = getSunlightValue(event.player);
-                            float energyBase = sunlightValue / (event.player.world.getMaxLightLevel() * 1.0F);
+                            float energyBase = sunlightValue / (event.player.level.getMaxLightLevel() * 1.0F);
                             int producedEnergy = Math.toIntExact(Math.round(energyBase * 100 * SolarHelmetConfig.GENERAL.ENERGY_PRODUCTION_MULTIPLIER.get()));
     
                             int energyStored = nbt.getInt("solar_helmet_energy_stored");
@@ -205,7 +227,7 @@ public class SolarHelmet{
                             int storedEnergy = nbt.getInt("solar_helmet_energy_stored");
                             if(storedEnergy > 0){
                                 AtomicInteger energyLeft = new AtomicInteger(storedEnergy);
-                                for(ItemStack stack : inv.mainInventory){ // Check if a item can be recharged
+                                for(ItemStack stack : inv.items){ // Check if a item can be recharged
                                     stack.getCapability(CapabilityEnergy.ENERGY).ifPresent(energyStorage -> {
                                         energyLeft.set(energyLeft.get() - energyStorage.receiveEnergy(energyLeft.get(), false));
                                     });
@@ -224,28 +246,28 @@ public class SolarHelmet{
     }
     
     private static boolean isItemHelmet(Item item){
-        if(item instanceof ArmorItem && ((ArmorItem) item).getEquipmentSlot() == EquipmentSlotType.HEAD){
+        if(item instanceof ArmorItem && ((ArmorItem) item).getSlot() == EquipmentSlotType.HEAD){
             return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(item.getRegistryName().toString());
         }
         return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(item.getRegistryName().toString());
     }
     
     private static boolean isInRightDimension(PlayerEntity player){
-        return !SolarHelmetConfig.GENERAL.DIMENSION_BLACKLIST.get().contains(player.world.func_230315_m_().func_242725_p().toString());
+        return !SolarHelmetConfig.GENERAL.DIMENSION_BLACKLIST.get().contains(player.level.dimension().location().toString());
     }
     
     private static int getSunlightValue(PlayerEntity player){
-        if(player.world.isDaytime()){
-            BlockPos.Mutable pos = new BlockPos.Mutable(player.getPosX(), player.getPosY() + 1, player.getPosZ());
-            int lightValuePlayer = player.world.getMaxLightLevel();
-            for(int y = pos.getY(); y < player.world.getHeight(); y++){
+        if(player.level.isDay()){
+            BlockPos.Mutable pos = new BlockPos.Mutable(player.getX(), player.getY() + 1, player.getZ());
+            int lightValuePlayer = player.level.getMaxLightLevel();
+            for(int y = pos.getY(); y < player.level.getHeight(); y++){
                 pos.setY(y);
-                lightValuePlayer = getSunlightThrough(player.world, pos, lightValuePlayer);
+                lightValuePlayer = getSunlightThrough(player.level, pos, lightValuePlayer);
                 if(lightValuePlayer <= 0){
                     break;
                 }
             }
-            if(player.world.isRaining()){
+            if(player.level.isRaining()){
             
             }
             return lightValuePlayer;
@@ -254,9 +276,6 @@ public class SolarHelmet{
     }
     
     private static int getSunlightThrough(World world, BlockPos pos, int currentLightValue){
-        if(world.isAirBlock(pos)){
-            return currentLightValue;
-        }
         BlockState state = world.getBlockState(pos);
         if(state.getBlock() instanceof IPlantable){
             return currentLightValue;
@@ -272,7 +291,48 @@ public class SolarHelmet{
             return 0;
         }
         
-        return Math.min(currentLightValue, 15 - world.getBlockState(pos).getOpacity(world, pos));
+        return Math.min(currentLightValue, 15 - world.getBlockState(pos).getLightBlock(world, pos));
+    }
+    
+    // copy solar helmet tag and energy stored to new stack
+    @SubscribeEvent
+    public static void anvilRepair(AnvilRepairEvent event){
+        ItemStack inputStack = event.getItemInput();
+        ItemStack resultStack = event.getItemResult();
+        
+        if(inputStack.hasTag()){
+            CompoundNBT inputStackTag = inputStack.getTag();
+            CompoundNBT resultStackTag = resultStack.hasTag() ? resultStack.getTag() : new CompoundNBT();
+            
+            if(inputStackTag.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
+                resultStackTag.putBoolean("SolarHelmet", inputStackTag.getBoolean("SolarHelmet"));
+            }
+            
+            if(inputStackTag.contains("solar_helmet_energy_stored", Constants.NBT.TAG_INT)){
+                resultStackTag.putInt("solar_helmet_energy_stored", inputStackTag.getInt("solar_helmet_energy_stored"));
+            }
+            
+            resultStack.setTag(resultStackTag);
+        }
+    }
+    
+    private static Field recipes = ObfuscationReflectionHelper.findField(RecipeManager.class, "field_199522_d"); // RecipeManager.recipes
+    public static void replaceRecipes(RecipeManager recipeManager, Collection<IRecipe<?>> allNewRecipes){
+        if(recipes != null){
+            Map<IRecipeType<?>, Map<ResourceLocation, IRecipe<?>>> map = Maps.newHashMap();
+            allNewRecipes.forEach((recipe) -> {
+                Map<ResourceLocation, IRecipe<?>> map1 = map.computeIfAbsent(recipe.getType(), (p_223390_0_) -> Maps.newHashMap());
+                IRecipe<?> overwrittenRecipe = map1.put(recipe.getId(), recipe);
+                if (overwrittenRecipe != null) {
+                    throw new IllegalStateException("Duplicate recipe ignored with ID " + recipe.getId());
+                }
+            });
+            try{
+                recipes.set(recipeManager, ImmutableMap.copyOf(map));
+            } catch(IllegalAccessException e){
+                e.printStackTrace();
+            }
+        }
     }
     
 }

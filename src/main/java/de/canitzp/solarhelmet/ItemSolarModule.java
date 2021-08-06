@@ -15,13 +15,12 @@ import java.util.List;
 public class ItemSolarModule extends Item {
 
     public ItemSolarModule(){
-        super(new Properties().group(SolarHelmet.TAB).maxStackSize(1));
-        this.setRegistryName(SolarHelmet.MODID, "solar_helmet_module");
+        super(new Properties().tab(SolarHelmet.TAB).stacksTo(1));
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        super.addInformation(stack, worldIn, tooltip, flagIn);
-        tooltip.add(new TranslationTextComponent("item.solarhelmet:solar_helmet_module.desc").func_230530_a_(Style.field_240709_b_.func_240721_b_(TextFormatting.GRAY)));
+    public void appendHoverText(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+        super.appendHoverText(stack, worldIn, tooltip, flagIn);
+        tooltip.add(new TranslationTextComponent("item.solarhelmet:solar_helmet_module.desc").withStyle(TextFormatting.GRAY));
     }
 }

@@ -1,3 +1,7 @@
+1.2.0:
+    - Forge and buildscript updates. Now using Minecraft 1.16.5 and Forge 36.2.0
+    - New recipe registration
+
 1.1.0:
     - Update to 1.16.2 (compiled with Forge 33.0.32)
 
