@@ -1,3 +1,8 @@
+1.2.1-1.16.5:
+    - Fixed recipe application bug, where it was possible to just take the uncrafted helmet out of the crafting grid and the module is already applied. Thanks to NerdyWhiteGuy for pointing that out.
+    - Use AddReloadListenerEvent instead on adding the recipes on world load. Now the /reload command works properly.
+    - Fixed the solar helmet ability to only charge the real inventory items, not armor and offhand. Now all can be charged.
+
 1.2.0:
     - Forge and buildscript updates. Now using Minecraft 1.16.5 and Forge 36.2.0
     - New recipe registration

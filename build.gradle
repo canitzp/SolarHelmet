@@ -11,15 +11,15 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'maven-publish'
 apply plugin: 'idea'
 
-version = "1.2.0"
-group= "de.canitzp.solarhelmet"
-archivesBaseName = "SolarHelmet"
+version = "1.2.1"
+group = "de.canitzp.solarhelmet"
+archivesBaseName = "SolarHelmet-${project.mc_version}"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
-    mappings channel: 'official', version: '1.16.5'
+    mappings channel: 'official', version: "${project.mappings_version}"
 
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -70,8 +70,8 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.5-36.2.0'
-    //implementation fg.deobf("mezz.jei:jei-1.14.4:6.0.0.18")
+    minecraft "net.minecraftforge:forge:${project.forge_version}"
+    implementation fg.deobf("mezz.jei:jei-${project.jei_version}")
 }
 
 jar {
