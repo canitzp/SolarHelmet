@@ -12,16 +12,16 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'maven-publish'
 apply plugin: 'idea'
 
-version = "1.2.1"
-group= "de.canitzp.solarhelmet"
-archivesBaseName = "SolarHelmet"
+version = "1.2.2"
+group = "de.canitzp.solarhelmet"
+archivesBaseName = "SolarHelmet-${project.mc_version}"
 
 // Mojang ships Java 16 to end users in 1.17+ instead of Java 8 in 1.16 or lower, so your mod should target Java 16.
 java.toolchain.languageVersion = JavaLanguageVersion.of(16)
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
-    mappings channel: 'official', version: '1.17.1'
+    mappings channel: 'official', version: "${project.mappings_version}"
 
     runs {
         client {
@@ -73,8 +73,8 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.17.1-37.0.9'
-    //implementation fg.deobf("mezz.jei:jei-1.14.4:6.0.0.18")
+    minecraft "net.minecraftforge:forge:${project.forge_version}"
+    implementation fg.deobf("mezz.jei:jei-${project.jei_version}")
 }
 
 jar {
