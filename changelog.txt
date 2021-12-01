@@ -1,3 +1,7 @@
+38.0.0:
+    - Update to 1.18
+    - New versioning numbering, still compatible with semver, but now the major number is equal to the major of the used minecraft forge version
+
 1.2.2-1.17.1:
     - Use AddReloadListenerEvent instead on adding the recipes on world load. Now the /reload command works properly.
     - Fixed the solar helmet ability to only charge the real inventory items, not armor and offhand. Now all can be charged.

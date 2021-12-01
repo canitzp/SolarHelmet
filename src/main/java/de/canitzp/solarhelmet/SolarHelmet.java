@@ -4,6 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -27,7 +28,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -41,9 +41,9 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fmllegacy.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -101,7 +101,7 @@ public class SolarHelmet{
         public static void renderTooltips(ItemTooltipEvent event){
             if(!event.getItemStack().isEmpty()){
                 CompoundTag nbt = event.getItemStack().getTag();
-                if(nbt != null && nbt.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
+                if(nbt != null && nbt.contains("SolarHelmet", Tag.TAG_BYTE)){
                     event.getToolTip().add(new TranslatableComponent("item.solarhelmet:solar_helmet_module_installed.text").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
                     if(SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get() > 0){
                         event.getToolTip().add(new TranslatableComponent("item.solarhelmet:solar_helmet_energy.text", nbt.getInt("solar_helmet_energy_stored"), SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()).withStyle(ChatFormatting.RED));
@@ -178,7 +178,7 @@ public class SolarHelmet{
                                     ItemStack stack = inv.getItem(i);
                                     if(!stack.isEmpty() && stack.getItem() instanceof ArmorItem){
                                         CompoundTag nbt = stack.getTag();
-                                        if(nbt != null && nbt.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
+                                        if(nbt != null && nbt.contains("SolarHelmet", Tag.TAG_BYTE)){
                                             return false;
                                         }
                                     }
@@ -211,7 +211,7 @@ public class SolarHelmet{
                 ItemStack helmet = inv.armor.get(EquipmentSlot.HEAD.getIndex());
                 if(!helmet.isEmpty() && helmet.hasTag() && isItemHelmet(helmet.getItem())){
                     CompoundTag nbt = helmet.getTag();
-                    if(nbt.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
+                    if(nbt.contains("SolarHelmet",Tag.TAG_BYTE)){
                         if(isInRightDimension(event.player)){ // Produce energy
                             int sunlightValue = getSunlightValue(event.player);
                             float energyBase = sunlightValue / (event.player.level.getMaxLightLevel() * 1.0F);
@@ -228,7 +228,7 @@ public class SolarHelmet{
                             }
                         }
     
-                        if(nbt.contains("solar_helmet_energy_stored", Constants.NBT.TAG_INT)){ // Consume energy
+                        if(nbt.contains("solar_helmet_energy_stored", Tag.TAG_INT)){ // Consume energy
                             int storedEnergy = nbt.getInt("solar_helmet_energy_stored");
                             if(storedEnergy > 0){
                                 AtomicInteger energyLeft = new AtomicInteger(storedEnergy);
@@ -308,11 +308,11 @@ public class SolarHelmet{
             CompoundTag inputStackTag = inputStack.getTag();
             CompoundTag resultStackTag = resultStack.hasTag() ? resultStack.getTag() : new CompoundTag();
     
-            if(inputStackTag.contains("SolarHelmet", Constants.NBT.TAG_BYTE)){
+            if(inputStackTag.contains("SolarHelmet", Tag.TAG_BYTE)){
                 resultStackTag.putBoolean("SolarHelmet", inputStackTag.getBoolean("SolarHelmet"));
             }
     
-            if(inputStackTag.contains("solar_helmet_energy_stored", Constants.NBT.TAG_INT)){
+            if(inputStackTag.contains("solar_helmet_energy_stored", Tag.TAG_INT)){
                 resultStackTag.putInt("solar_helmet_energy_stored", inputStackTag.getInt("solar_helmet_energy_stored"));
             }
             
