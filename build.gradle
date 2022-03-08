@@ -12,7 +12,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'maven-publish'
 apply plugin: 'idea'
 
-version = "38.0.0"
+version = "40.0.0"
 group = "de.canitzp.solarhelmet"
 archivesBaseName = "SolarHelmet-${project.mc_version}"
 

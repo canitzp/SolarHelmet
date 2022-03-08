@@ -115,7 +115,7 @@ public class SolarHelmet{
             event.addListener(new SimplePreparableReloadListener<RecipeManager>() {
                 @Override
                 protected RecipeManager prepare(ResourceManager iResourceManager, ProfilerFiller iProfiler){
-                    return event.getDataPackRegistries().getRecipeManager();
+                    return event.getServerResources().getRecipeManager();
                 }
             
                 @Override
