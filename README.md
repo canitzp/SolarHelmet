@@ -18,3 +18,5 @@ The helmet itself can't be used as battery and the only way to extract the energ
 The helmet has no transfer limit, so it can be discharged as fast as possible (the real transfer rate depends on the energy consumer).
 
 ![creative_tab](https://raw.githubusercontent.com/canitzp/SolarHelmet/master/readme/creative_tab.png)
+
+[![mini_mod](https://canitzp.de/minimod_logo.png)](https://canitzp.de/minimod.html)
