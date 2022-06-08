@@ -5,7 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
@@ -30,7 +30,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.AnvilRepairEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -102,9 +101,9 @@ public class SolarHelmet{
             if(!event.getItemStack().isEmpty()){
                 CompoundTag nbt = event.getItemStack().getTag();
                 if(nbt != null && nbt.contains("SolarHelmet", Tag.TAG_BYTE)){
-                    event.getToolTip().add(new TranslatableComponent("item.solarhelmet:solar_helmet_module_installed.text").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
+                    event.getToolTip().add(Component.translatable("item.solarhelmet:solar_helmet_module_installed.text").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
                     if(SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get() > 0){
-                        event.getToolTip().add(new TranslatableComponent("item.solarhelmet:solar_helmet_energy.text", nbt.getInt("solar_helmet_energy_stored"), SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()).withStyle(ChatFormatting.RED));
+                        event.getToolTip().add(Component.translatable("item.solarhelmet:solar_helmet_energy.text", nbt.getInt("solar_helmet_energy_stored"), SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()).withStyle(ChatFormatting.RED));
                     }
                 }
             }
@@ -148,8 +147,10 @@ public class SolarHelmet{
                     CompoundTag nbt = new CompoundTag();
                     nbt.putBoolean("SolarHelmet", true);
                     helmetStack.setTag(nbt);
+
+                    ResourceLocation helmetKey = ForgeRegistries.ITEMS.getKey(helmet);
                     // create recipe id
-                    ResourceLocation craftingId = new ResourceLocation(MODID, "solar_helmet_" + helmet.getRegistryName().getNamespace() + "_" + helmet.getRegistryName().getPath());
+                    ResourceLocation craftingId = new ResourceLocation(MODID, "solar_helmet_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
                     // create recipe
                     ShapelessRecipe recipe = new ShapelessRecipe(craftingId, "", helmetStack, recipeInput) {
                         @Nonnull
@@ -191,7 +192,7 @@ public class SolarHelmet{
             
                     if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingId))){
                         allNewRecipes.add(recipe);
-                        LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmet.getRegistryName().toString(), craftingId));
+                        LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmetKey.toString(), craftingId));
                     }
                 }
             }
@@ -251,9 +252,9 @@ public class SolarHelmet{
     
     private static boolean isItemHelmet(Item item){
         if(item instanceof ArmorItem && ((ArmorItem) item).getSlot() == EquipmentSlot.HEAD){
-            return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(item.getRegistryName().toString());
+            return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(ForgeRegistries.ITEMS.getKey(item).toString());
         }
-        return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(item.getRegistryName().toString());
+        return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(ForgeRegistries.ITEMS.getKey(item).toString());
     }
     
     private static boolean isInRightDimension(Player player){
@@ -285,13 +286,13 @@ public class SolarHelmet{
             return currentLightValue;
         }
         
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_OPAQUE_BLOCKS.get().contains(state.getBlock().getRegistryName().toString())){
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
             return currentLightValue;
         }
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_PARTLY_OPAQUE_BLOCKS.get().contains(state.getBlock().getRegistryName().toString())){
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_PARTLY_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
             return 1;
         }
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_NON_OPAQUE_BLOCKS.get().contains(state.getBlock().getRegistryName().toString())){
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_NON_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
             return 0;
         }
         

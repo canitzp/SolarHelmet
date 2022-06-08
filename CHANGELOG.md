@@ -1,3 +1,7 @@
+**41.0.0**
+
+- Update to 1.19
+
 **40.0.0**
 
 - Update to 1.18.2 (Needs at least Forge 40.0.12)

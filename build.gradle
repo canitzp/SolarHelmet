@@ -94,10 +94,10 @@ modrinth {
     token = System.getenv("MODRINTH_TOKEN")
     projectId = "7wz7J5gy"
     versionNumber = "${project.mod_version}"
-    versionName = "${project.mod_name} - ${project.mod_version} (for 1.18.2)"
+    versionName = "${project.mod_name} - ${project.mod_version} (for ${project.mc_version})"
     versionType = "release"
     uploadFile = jar
-    gameVersions = ["1.18.2"]
+    gameVersions = ["${project.mc_version}"]
     loaders = ["forge"]
     changelog = rootProject.file("CHANGELOG.md").text
     syncBodyFrom = rootProject.file("README.md").text
@@ -111,11 +111,11 @@ task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge)
     apiToken = System.getenv('CURSEFORGE_TOKEN')
 
     def mainFile = upload(355361, jar)
-    mainFile.displayName = "${project.mod_name} - ${project.mod_version} (for 1.18.2)"
+    mainFile.displayName = "${project.mod_name} - ${project.mod_version} (for ${project.mc_version})"
     mainFile.releaseType = "release"
     mainFile.changelogType = 'markdown'
     mainFile.changelog = file("CHANGELOG.md")
     mainFile.addModLoader("Forge")
     mainFile.addJavaVersion("Java 17")
-    mainFile.addGameVersion("1.18.2")
+    mainFile.addGameVersion("${project.mc_version}")
 }
