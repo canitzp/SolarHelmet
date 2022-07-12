@@ -23,7 +23,6 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -33,7 +32,6 @@ import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.AnvilRepairEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -302,8 +300,8 @@ public class SolarHelmet{
     // copy solar helmet tag and energy stored to new stack
     @SubscribeEvent
     public static void anvilRepair(AnvilRepairEvent event){
-        ItemStack inputStack = event.getItemInput();
-        ItemStack resultStack = event.getItemResult();
+        ItemStack inputStack = event.getLeft();
+        ItemStack resultStack = event.getOutput();
         
         if(inputStack.hasTag()){
             CompoundTag inputStackTag = inputStack.getTag();
