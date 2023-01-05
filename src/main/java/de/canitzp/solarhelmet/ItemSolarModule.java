@@ -16,7 +16,7 @@ import java.util.List;
 public class ItemSolarModule extends Item {
 
     public ItemSolarModule(){
-        super(new Properties().tab(SolarHelmet.TAB).stacksTo(1));
+        super(new Properties().stacksTo(1));
     }
 
     @Override

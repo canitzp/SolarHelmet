@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "solarhelmet:item/solar_helmet_module"
+  }
+}

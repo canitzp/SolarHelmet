@@ -36,10 +36,10 @@ minecraft {
                 }
             }
         }
-	data {
-            workingDirectory project.file('data')
+        data {
+            workingDirectory project.file('run_data')
             property 'forge.logging.console.level', 'debug'
-            args '--mod', 'solarhelmet', '--all', '--output', file('src/generated/resources/')
+            args '--mod', 'solarhelmet', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
             mods {
                 solarhelmet {
                     source sourceSets.main
@@ -60,7 +60,7 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${project.forge_version}"
-    implementation fg.deobf("mezz.jei:jei-${project.jei_version}")
+    //implementation fg.deobf("mezz.jei:jei-${project.jei_version}")
 }
 
 jar {

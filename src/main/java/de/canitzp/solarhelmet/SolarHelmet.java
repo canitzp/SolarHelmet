@@ -18,16 +18,13 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.AnvilRepairEvent;
@@ -60,27 +57,6 @@ public class SolarHelmet{
     
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     public static final RegistryObject<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
-    
-    public static final CreativeModeTab TAB = new CreativeModeTab(MODID){
-        @Override
-        public ItemStack makeIcon(){
-            return new ItemStack(SOLAR_MODULE_ITEM.get());
-        }
-    
-        @Override
-        public void fillItemList(NonNullList<ItemStack> stacks){
-            stacks.add(SOLAR_MODULE_ITEM.get().getDefaultInstance());
-            for(Item item : ForgeRegistries.ITEMS){
-                if(SolarHelmet.isItemHelmet(item)){
-                    ItemStack stack = new ItemStack(item);
-                    CompoundTag tag = new CompoundTag();
-                    tag.putBoolean("SolarHelmet", true);
-                    stack.setTag(tag);
-                    stacks.add(stack);
-                }
-            }
-        }
-    };
     
     public SolarHelmet(){
         LOGGER.info("Solar Helmet loading...");
@@ -150,7 +126,7 @@ public class SolarHelmet{
                     // create recipe id
                     ResourceLocation craftingId = new ResourceLocation(MODID, "solar_helmet_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
                     // create recipe
-                    ShapelessRecipe recipe = new ShapelessRecipe(craftingId, "", helmetStack, recipeInput) {
+                    ShapelessRecipe recipe = new ShapelessRecipe(craftingId, "", CraftingBookCategory.EQUIPMENT, helmetStack, recipeInput) {
                         @Nonnull
                         @Override
                         public ItemStack assemble(CraftingContainer inv){
@@ -232,7 +208,7 @@ public class SolarHelmet{
                             if(storedEnergy > 0){
                                 AtomicInteger energyLeft = new AtomicInteger(storedEnergy);
                                 for(ItemStack stack : getInventory(event.player)){ // Check if a item can be recharged
-                                    stack.getCapability(CapabilityEnergy.ENERGY).ifPresent(energyStorage -> {
+                                    stack.getCapability(ForgeCapabilities.ENERGY).ifPresent(energyStorage -> {
                                         energyLeft.set(energyLeft.get() - energyStorage.receiveEnergy(energyLeft.get(), false));
                                     });
                                     if(energyLeft.get() <= 0){
@@ -248,7 +224,7 @@ public class SolarHelmet{
         }
     }
     
-    private static boolean isItemHelmet(Item item){
+    public static boolean isItemHelmet(Item item){
         if(item instanceof ArmorItem && ((ArmorItem) item).getSlot() == EquipmentSlot.HEAD){
             return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(ForgeRegistries.ITEMS.getKey(item).toString());
         }
