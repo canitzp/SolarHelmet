@@ -99,7 +99,7 @@ modrinth {
     uploadFile = jar
     gameVersions = ["1.18.2"]
     loaders = ["forge"]
-    changelog = rootProject.file("CHANGELOG.md").text
+    changelog = String.join("\n", rootProject.file("CHANGELOG.md").text.lines().takeWhile(s -> !s.isEmpty()).toList())
     syncBodyFrom = rootProject.file("README.md").text
 }
 
