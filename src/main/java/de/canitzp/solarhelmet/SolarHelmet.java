@@ -3,6 +3,7 @@ package de.canitzp.solarhelmet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -129,7 +130,7 @@ public class SolarHelmet{
                     ShapelessRecipe recipe = new ShapelessRecipe(craftingId, "", CraftingBookCategory.EQUIPMENT, helmetStack, recipeInput) {
                         @Nonnull
                         @Override
-                        public ItemStack assemble(CraftingContainer inv){
+                        public ItemStack assemble(CraftingContainer inv, RegistryAccess access){
                             CompoundTag nbt = new CompoundTag();
                             for(int i = 0; i < inv.getContainerSize(); i++){
                                 ItemStack stack = inv.getItem(i);
@@ -139,7 +140,7 @@ public class SolarHelmet{
                                     }
                                 }
                             }
-                            ItemStack out = super.assemble(inv);
+                            ItemStack out = super.assemble(inv, access);
                             nbt.putBoolean("SolarHelmet", true);
                             out.setTag(nbt);
                             return out;
@@ -225,7 +226,7 @@ public class SolarHelmet{
     }
     
     public static boolean isItemHelmet(Item item){
-        if(item instanceof ArmorItem && ((ArmorItem) item).getSlot() == EquipmentSlot.HEAD){
+        if(item instanceof ArmorItem && ((ArmorItem) item).getType().getSlot() == EquipmentSlot.HEAD){
             return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(ForgeRegistries.ITEMS.getKey(item).toString());
         }
         return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(ForgeRegistries.ITEMS.getKey(item).toString());

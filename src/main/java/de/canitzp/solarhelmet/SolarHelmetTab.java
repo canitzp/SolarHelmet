@@ -18,7 +18,7 @@ public class SolarHelmetTab {
         event.registerCreativeModeTab(new ResourceLocation(SolarHelmet.MODID, "tab"), builder -> {
             builder.icon(() -> SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance());
             builder.title(Component.translatable("tab.solarhelmet"));
-            builder.displayItems((featureFlagSet, output, hasOp) -> {
+            builder.displayItems((parameters, output) -> {
                 output.accept(SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance());
                 for(Item item : ForgeRegistries.ITEMS){
                     if(SolarHelmet.isItemHelmet(item)){
