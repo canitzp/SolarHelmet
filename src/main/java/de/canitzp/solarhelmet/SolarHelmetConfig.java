@@ -14,7 +14,8 @@ public class SolarHelmetConfig{
     public static final ForgeConfigSpec spec = BUILDER.build();
 
     public static class General {
-        public final ForgeConfigSpec.ConfigValue<Double> ENERGY_PRODUCTION_MULTIPLIER;
+        public final ForgeConfigSpec.ConfigValue<Integer> ENERGY_BASE_VALUE;
+        public final ForgeConfigSpec.ConfigValue<Float> ENERGY_PRODUCTION_MULTIPLIER;
         public final ForgeConfigSpec.ConfigValue<Double> ENERGY_PRODUCTION_NIGHT_MULTIPLIER;
         public final ForgeConfigSpec.ConfigValue<Double> ENERGY_PRODUCTION_RAIN_MULTIPLIER;
         public final ForgeConfigSpec.ConfigValue<Integer> ENERGY_STORAGE;
@@ -28,13 +29,16 @@ public class SolarHelmetConfig{
     
         public General(ForgeConfigSpec.Builder builder) {
             builder.push("General");
+            ENERGY_BASE_VALUE = builder
+                .comment("Base energy production of the helmet.")
+                .translation("Energy base value")
+                .define("energy_base_value", 15);
             ENERGY_PRODUCTION_MULTIPLIER = builder
                 .comment("How much energy should the helmet produce?",
-                    "For this value equaling 1.0, 100FE per tick are produces while in direct sunlight and 7FE per tick when partly opaque blocks are above.",
-                    "The default value 0.1 means that 10FR/t are produced while in direct sunlight and 1FE/t (0.7FE are rounded up to 1. Less that 0.5 are rounded down to 0FE) are produced while in indirect sunlight.",
-                    "One second is equal to 20 tick (when no lag is present)")
+                    "For this value equaling 1.0, the 'energy_base_value' is produces while in direct sunlight.",
+                    "Any changes to this configuration are directly multiplied with the final energy production value, after any other calculation (sunlight strength and opaque blocks")
                 .translation("Energy production multiplier")
-                .defineInRange("energy_production_multiplier", 0.1D, 0D, 1000000D);
+                .define("energy_production_multiplier", 1.0F);
             ENERGY_PRODUCTION_NIGHT_MULTIPLIER = builder
                 .comment("How much should the night reduce the energy value?",
                     "1.0 is equal to 100% energy, so there is no decrease at all.",

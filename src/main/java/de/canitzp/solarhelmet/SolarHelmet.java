@@ -69,7 +69,7 @@ public class SolarHelmet{
         public ItemStack makeIcon(){
             return new ItemStack(SOLAR_MODULE_ITEM.get());
         }
-    
+
         @Override
         public void fillItemList(NonNullList<ItemStack> stacks){
             stacks.add(SOLAR_MODULE_ITEM.get().getDefaultInstance());
@@ -84,7 +84,7 @@ public class SolarHelmet{
             }
         }
     };
-    
+
     public SolarHelmet(){
         LOGGER.info("Solar Helmet loading...");
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
@@ -213,10 +213,12 @@ public class SolarHelmet{
                     CompoundTag nbt = helmet.getTag();
                     if(nbt.contains("SolarHelmet",Tag.TAG_BYTE)){
                         if(isInRightDimension(event.player)){ // Produce energy
-                            int sunlightValue = getSunlightValue(event.player);
-                            float energyBase = sunlightValue / (event.player.level.getMaxLightLevel() * 1.0F);
-                            int producedEnergy = Math.toIntExact(Math.round(energyBase * 100 * SolarHelmetConfig.GENERAL.ENERGY_PRODUCTION_MULTIPLIER.get()));
-    
+                            float energyMultiplierBasedOnSunlight = calculateSolarEnergy(event.player.level);
+                            float energyMultiplierBasedOnAboveBlocks = calculateBlockingBlockPenalty(event.player);
+                            float energyMultiplierFromConfig = SolarHelmetConfig.GENERAL.ENERGY_PRODUCTION_MULTIPLIER.get();
+
+                            int producedEnergy = Math.round(SolarHelmetConfig.GENERAL.ENERGY_BASE_VALUE.get() * energyMultiplierBasedOnSunlight * energyMultiplierBasedOnAboveBlocks * energyMultiplierFromConfig);
+
                             int energyStored = nbt.getInt("solar_helmet_energy_stored");
                             if(energyStored < SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()){
                                 int energyToStore = energyStored + producedEnergy;
@@ -259,43 +261,81 @@ public class SolarHelmet{
     private static boolean isInRightDimension(Player player){
         return !SolarHelmetConfig.GENERAL.DIMENSION_BLACKLIST.get().contains(player.level.dimension().location().toString());
     }
-    
-    private static int getSunlightValue(Player player){
-        if(player.level.isDay()){
-            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(player.getBlockX(), player.getBlockY() + 1, player.getBlockZ());
-            int lightValuePlayer = player.level.getMaxLightLevel();
-            for(int y = pos.getY(); y < player.level.getHeight(); y++){
-                pos.setY(y);
-                lightValuePlayer = getSunlightThrough(player.level, pos, lightValuePlayer);
-                if(lightValuePlayer <= 0){
-                    break;
-                }
-            }
-            if(player.level.isRaining()){
-            
-            }
-            return lightValuePlayer;
-        }
-        return 0;
+
+    /**
+     * Plots the current daytime on a graph with 1 as upper and -0.8 as lower bound.
+     * Values under 0 are returned as 0.
+     * The graph itself is only 0.9 tall, but is shifted up by 0.1, so that the night is 2 hours shorter than the day.
+     * This should be used as multiplier for energy production.
+     * @param level Level to calculate in.
+     * @return
+     */
+    private static float calculateSolarEnergy(Level level){
+        long daytime = level.getDayTime() % 24000L;
+        return Math.max(0F, 0.9F * (float) Math.sin((Math.PI / 12000L) * daytime) + 0.1F);
     }
-    
-    private static int getSunlightThrough(Level world, BlockPos pos, int currentLightValue){
-        BlockState state = world.getBlockState(pos);
+
+    /**
+     * Calculates how much energy penalties are given, based on all blocks above the player.
+     *
+     * @param player
+     * @return Float where 1F is no penalty and 0F would be full-blocking (stops energy production).
+     */
+    private static float calculateBlockingBlockPenalty(Player player){
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(player.getBlockX(), player.getBlockY() + 1, player.getBlockZ());
+        float multiplier = 1F;
+        for(int y = pos.getY(); y < player.level.getHeight(); y++){
+            pos.setY(y);
+            multiplier *= calculateDirectBlockOpaqueMultiplier(player.level, pos);
+            if(multiplier <= 0F){
+                break;
+            }
+        }
+        return multiplier;
+    }
+
+    /**
+     * Calculate the multiplier (penalty) of the block at the given position.
+     *
+     * @param level
+     * @param pos
+     * @return Float where 1F is no penalty and 0F would be full-blocking (stops energy production).
+     */
+    private static float calculateDirectBlockOpaqueMultiplier(Level level, BlockPos pos){
+        BlockState state = level.getBlockState(pos);
+
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
+            return 0F;
+        }
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_PARTLY_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
+            return 1F;
+        }
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_NON_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
+            return 0F;
+        }
         if(state.getBlock() instanceof IPlantable){
-            return currentLightValue;
+            return 1F;
         }
         
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_OPAQUE_BLOCKS.get().contains(state.getBlock().getRegistryName().toString())){
-            return currentLightValue;
-        }
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_PARTLY_OPAQUE_BLOCKS.get().contains(state.getBlock().getRegistryName().toString())){
-            return 1;
-        }
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_NON_OPAQUE_BLOCKS.get().contains(state.getBlock().getRegistryName().toString())){
-            return 0;
-        }
-        
-        return Math.min(currentLightValue, 15 - world.getBlockState(pos).getLightBlock(world, pos));
+        return state.getShadeBrightness(level, pos);
+    }
+
+    /**
+     * Custom implementation for checking if it is day.
+     * Minecraft days are a time span from 0 to 24000, but all values above are also valid and represent the days passed.
+     * We can get rid of the day counter if we mod the daytime by 24000 and so get the actual time of the day.
+     * Time map:
+     *  0: 6am
+     *  6000: 12pm
+     *  12000: 6pm
+     *  18000: 12am (midnight)
+     *  Therefor this formula assumes everyday starts at 6am (0) and ends at 8pm (14000).
+     * @param level The world where the check should be performed.
+     * @return If it is day or not. (Day is from 6am to 8pm)
+     */
+    private static boolean isDaytime(Level level){
+        long daytime = level.getDayTime() % 24000L;
+        return daytime < 14000;
     }
     
     // copy solar helmet tag and energy stored to new stack
