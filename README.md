@@ -19,4 +19,18 @@ The helmet has no transfer limit, so it can be discharged as fast as possible (t
 
 ![creative_tab](https://raw.githubusercontent.com/canitzp/SolarHelmet/master/readme/creative_tab.png)
 
+### Solar production
+Since version 40.1.0 (1.18.2 backport) and 45.1.0, a new calculation is used for determining a multiplier based on daytime.
+For simplicity the here shown graph uses the default base energy value for easier readability:
+![solar_production_plot](https://raw.githubusercontent.com/canitzp/SolarHelmet/master/readme/solar_production_plot.png)
+
+x-axis: Minecraft ingame daytime, value between 0 and infinite (every 24000 is one day), every day starts at (daycount*24000)+6000
+
+y-axis: energy production FE/t, if in direct sunlight, and with the default value of 15FE/t max
+
+Formula:
+```math
+f(x)=0.9*\sin((\tfrac{\pi}{12000})*x)+0.1
+```
+
 [![mini_mod](https://canitzp.de/minimod_logo.png)](https://canitzp.de/minimod.html)
