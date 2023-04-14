@@ -1,4 +1,5 @@
 45.1.0:
+43.1.0:
 40.1.0:
   - Add new algorithm for determining solar production. See readme for more information.
   - Add new configuration value "energy_base_value", which is the default max energy produced per tick.
