@@ -129,68 +129,25 @@ public class SolarHelmet{
             List<Recipe<?>> allNewRecipes = new ArrayList<>();
             for(Item helmet : ForgeRegistries.ITEMS.getValues()){
                 if(SolarHelmet.isItemHelmet(helmet)){
-                    // create recipe input
-                    NonNullList<Ingredient> recipeInput = NonNullList.create();
-                    recipeInput.add(Ingredient.of(SOLAR_MODULE_ITEM.get()));
-                    recipeInput.add(Ingredient.of(helmet));
-                    List<String> add_craft_items = SolarHelmetConfig.GENERAL.ADD_CRAFT_ITEMS.get();
-                    add_craft_items.stream()
-                                   .limit(7)
-                                   .map(s -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(s)))
-                                   .filter(Objects::nonNull)
-                                   .map(Ingredient::of)
-                                   .forEach(recipeInput::add);
-                    // create recipe output
-                    ItemStack helmetStack = new ItemStack(helmet);
-                    CompoundTag nbt = new CompoundTag();
-                    nbt.putBoolean("SolarHelmet", true);
-                    helmetStack.setTag(nbt);
-
                     ResourceLocation helmetKey = ForgeRegistries.ITEMS.getKey(helmet);
-                    // create recipe id
-                    ResourceLocation craftingId = new ResourceLocation(MODID, "solar_helmet_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
-                    // create recipe
-                    ShapelessRecipe recipe = new ShapelessRecipe(craftingId, "", helmetStack, recipeInput) {
-                        @Nonnull
-                        @Override
-                        public ItemStack assemble(CraftingContainer inv){
-                            CompoundTag nbt = new CompoundTag();
-                            for(int i = 0; i < inv.getContainerSize(); i++){
-                                ItemStack stack = inv.getItem(i);
-                                if(!stack.isEmpty() && stack.getItem() instanceof ArmorItem){
-                                    if(stack.hasTag()){
-                                        nbt = stack.getTag().copy();
-                                    }
-                                }
-                            }
-                            ItemStack out = super.assemble(inv);
-                            nbt.putBoolean("SolarHelmet", true);
-                            out.setTag(nbt);
-                            return out;
-                        }
-                
-                        // checks if the helmet doesn't already have the module
-                        @Override
-                        public boolean matches(CraftingContainer inv, Level level1){
-                            if(super.matches(inv, level1)){
-                                for(int i = 0; i < inv.getContainerSize(); i++){
-                                    ItemStack stack = inv.getItem(i);
-                                    if(!stack.isEmpty() && stack.getItem() instanceof ArmorItem){
-                                        CompoundTag nbt = stack.getTag();
-                                        if(nbt != null && nbt.contains("SolarHelmet", Tag.TAG_BYTE)){
-                                            return false;
-                                        }
-                                    }
-                                }
-                                return true;
-                            }
-                            return false;
-                        }
-                    };
-            
-                    if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingId))){
-                        allNewRecipes.add(recipe);
-                        LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmetKey.toString(), craftingId));
+                    // create recipe id for creation recipe
+                    ResourceLocation craftingIdCreation = new ResourceLocation(MODID, "solar_helmet_creation_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
+                    // create recipe id for removal recipe
+                    ResourceLocation craftingIdRemoval = new ResourceLocation(MODID, "solar_helmet_removal_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
+                    // create recipe for creation
+                    Recipe<?> creationRecipe = SolarRecipeManager.creationRecipe(helmet, craftingIdCreation);
+                    // create recipe for removal
+                    Recipe<?> removalRecipe = SolarRecipeManager.removalRecipe(helmet, craftingIdRemoval);
+
+                    // add creation recipe to recipes list
+                    if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingIdCreation))){
+                        allNewRecipes.add(creationRecipe);
+                        LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmetKey.toString(), craftingIdCreation));
+                    }
+                    // add removal recipe to recipes list
+                    if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingIdRemoval))){
+                        allNewRecipes.add(removalRecipe);
+                        LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmetKey.toString(), craftingIdRemoval));
                     }
                 }
             }
