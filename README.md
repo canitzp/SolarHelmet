@@ -18,6 +18,8 @@ The energy is internally stored and automatically applied to any item in you inv
 The helmet itself can't be used as battery and the only way to extract the energy is by putting a energy consuming one, eg.: a battery, in your inventory.  
 The helmet has no transfer limit, so it can be discharged as fast as possible (the real transfer rate depends on the energy consumer).
 
+Since 40.2.0/43.2.0/45.2.0 you craft the helmet and the module together in the smithing table. You now also can uncraft it, by putting the helmet in any crafting grid.
+
 ![creative_tab](https://raw.githubusercontent.com/canitzp/SolarHelmet/master/readme/creative_tab.png)
 
 ### Solar production
