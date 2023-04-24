@@ -1,4 +1,12 @@
+45.2.0:
+43.2.0:
+40.2.0:
+  - Reworked recipes:
+    - modules are now applied within the smiting table (upgrade)
+    - removal of the module is now possible by simply putting th helmet into a crafting grid
+
 45.1.0:
+43.1.0:
 40.1.0:
   - Add new algorithm for determining solar production. See readme for more information.
   - Add new configuration value "energy_base_value", which is the default max energy produced per tick.
