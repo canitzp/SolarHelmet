@@ -1,3 +1,8 @@
+45.3.0:
+43.3.0:
+40.3.0:
+    - Fixed removal recipe. Any helmet with any nbt tag, could produce infinite modules
+
 45.2.0:
 43.2.0:
 40.2.0:

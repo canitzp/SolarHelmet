@@ -84,7 +84,7 @@ public class SolarRecipeManager {
                     return false; // this "should" never happen
                 }
                 if (!inputStack.hasTag()) {
-                    return true;
+                    return false;
                 }
                 return inputStack.getTag().getBoolean("SolarHelmet");
             }
