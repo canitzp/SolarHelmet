@@ -1,0 +1,7 @@
+{
+  "item.solarhelmet.solar_helmet_module": "Шлем-солнечный модуль",
+  "item.solarhelmet:solar_helmet_module.desc": "Скомбинируйте с каким-нибудь шлемом и производите энергию в солнечное время.",
+  "item.solarhelmet:solar_helmet_module_installed.text": "Режим солнца",
+  "item.solarhelmet:solar_helmet_energy.text": "Запас энергии: %dFE/%dFE",
+  "tab.solarhelmet": "Solar Helmet"
+}
