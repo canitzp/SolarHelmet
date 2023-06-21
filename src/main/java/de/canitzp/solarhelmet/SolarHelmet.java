@@ -4,6 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -55,14 +56,17 @@ public class SolarHelmet{
     public static final String MODID = "solarhelmet";
     
     private static final Logger LOGGER = LogManager.getLogger(SolarHelmet.MODID);
-    
+
+    public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final RegistryObject<CreativeModeTab> TAB = TABS.register("tab", SolarHelmetTab::create);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     public static final RegistryObject<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
     
     public SolarHelmet(){
         LOGGER.info("Solar Helmet loading...");
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
-        
+
+        TABS.register(FMLJavaModLoadingContext.get().getModEventBus());
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
         LOGGER.info("Solar Helmet loaded.");
     }
@@ -139,14 +143,14 @@ public class SolarHelmet{
     
         @SubscribeEvent
         public static void updatePlayer(TickEvent.PlayerTickEvent event){
-            if(event.phase == TickEvent.Phase.END && !event.player.level.isClientSide()){
+            if(event.phase == TickEvent.Phase.END && !event.player.level().isClientSide()){
                 Inventory inv = event.player.getInventory();
                 ItemStack helmet = inv.armor.get(EquipmentSlot.HEAD.getIndex());
                 if(!helmet.isEmpty() && helmet.hasTag() && isItemHelmet(helmet.getItem())){
                     CompoundTag nbt = helmet.getTag();
                     if(nbt.contains("SolarHelmet",Tag.TAG_BYTE)){
                         if(isInRightDimension(event.player)){ // Produce energy
-                            float energyMultiplierBasedOnSunlight = calculateSolarEnergy(event.player.level);
+                            float energyMultiplierBasedOnSunlight = calculateSolarEnergy(event.player.level());
                             float energyMultiplierBasedOnAboveBlocks = calculateBlockingBlockPenalty(event.player);
                             float energyMultiplierFromConfig = SolarHelmetConfig.GENERAL.ENERGY_PRODUCTION_MULTIPLIER.get();
 
@@ -192,7 +196,7 @@ public class SolarHelmet{
     }
     
     private static boolean isInRightDimension(Player player){
-        return !SolarHelmetConfig.GENERAL.DIMENSION_BLACKLIST.get().contains(player.level.dimension().location().toString());
+        return !SolarHelmetConfig.GENERAL.DIMENSION_BLACKLIST.get().contains(player.level().dimension().location().toString());
     }
 
     /**
@@ -217,9 +221,9 @@ public class SolarHelmet{
     private static float calculateBlockingBlockPenalty(Player player){
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(player.getBlockX(), player.getBlockY() + 1, player.getBlockZ());
         float multiplier = 1F;
-        for(int y = pos.getY(); y < player.level.getHeight(); y++){
+        for(int y = pos.getY(); y < player.level().getHeight(); y++){
             pos.setY(y);
-            multiplier *= calculateDirectBlockOpaqueMultiplier(player.level, pos);
+            multiplier *= calculateDirectBlockOpaqueMultiplier(player.level(), pos);
             if(multiplier <= 0F){
                 break;
             }

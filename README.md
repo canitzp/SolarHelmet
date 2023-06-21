@@ -2,15 +2,16 @@
 
 ## Support
 
-- 1.19.4: fully supported
-- 1.19.3: not supported
-- 1.19.2: hotfix only
-- 1.19/1.19.1: not supported
-- 1.18.2: fully supported
-- 1.18/1.18.1: not supported
-- 1.17.x: not supported
-- 1.16.x: not supported
-- 1.15.x: not supported
+- 1.20/1.20.1: supported
+- 1.19.4: Bugfix only
+- 1.19.3: unsupported
+- 1.19.2: Bugfix only
+- 1.19/1.19.1: unsupported
+- 1.18.2: Bugfix only
+- 1.18/1.18.1: unsupported
+- 1.17.x: unsupported
+- 1.16.x: unsupported
+- 1.15.x: unsupported
 
 ## About
 

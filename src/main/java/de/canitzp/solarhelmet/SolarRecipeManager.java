@@ -14,27 +14,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class SolarRecipeManager {
 
-    @SuppressWarnings("removal")
     public static Recipe<?> creationRecipe(final Item helmet, final ResourceLocation craftingId){
         ItemStack outputStack = helmet.getDefaultInstance();
         outputStack.getOrCreateTag().putBoolean("SolarHelmet", true);
-        return new LegacyUpgradeRecipe(craftingId, Ingredient.of(helmet), Ingredient.of(SolarHelmet.SOLAR_MODULE_ITEM.get()), outputStack){
+
+        return new SmithingRecipe() {
             @Override
-            public @NotNull ItemStack assemble(@NotNull Container container, RegistryAccess access) {
-                ItemStack assembled = super.assemble(container, access);
+            public boolean isTemplateIngredient(ItemStack stack) {
+                return stack.isEmpty();
+            }
+
+            @Override
+            public boolean isBaseIngredient(ItemStack stack) {
+                return stack.is(helmet) && !(stack.hasTag() && stack.getTag().getBoolean("SolarHelmet"));
+            }
+
+            @Override
+            public boolean isAdditionIngredient(ItemStack stack) {
+                return stack.is(SolarHelmet.SOLAR_MODULE_ITEM.get());
+            }
+
+            @Override
+            public boolean matches(Container container, Level level) {
+                return isTemplateIngredient(container.getItem(0)) && isBaseIngredient(container.getItem(1)) && isAdditionIngredient(container.getItem(2));
+            }
+
+            @Override
+            public ItemStack assemble(Container container, RegistryAccess access) {
+                ItemStack assembled = this.getResultItem(access).copy();
+                // copy old nbt to new stack
+                assembled.getOrCreateTag().merge(container.getItem(1).getOrCreateTag());
+                // set solar helmet flag
                 assembled.getOrCreateTag().putBoolean("SolarHelmet", true);
                 return assembled;
             }
 
-            // checks if the helmet doesn't already have the module
             @Override
-            public boolean matches(Container container, Level level) {
-                boolean matches = super.matches(container, level);
-                if(!matches){
-                    return false;
-                }
-                ItemStack helmetInputStack = container.getItem(0);
-                return !helmetInputStack.hasTag() || !helmetInputStack.getTag().getBoolean("SolarHelmet");
+            public ItemStack getResultItem(RegistryAccess access) {
+                return outputStack;
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return craftingId;
+            }
+
+            @Override
+            public RecipeSerializer<?> getSerializer() {
+                return RecipeSerializer.SMITHING_TRANSFORM;
             }
         };
     }
