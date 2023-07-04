@@ -1,16 +1,15 @@
 package de.canitzp.solarhelmet;
 
+import de.canitzp.solarhelmet.recipe.RecipeModuleAddition;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.Container;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.NotNull;
 
 public class SolarRecipeManager {
 
@@ -18,52 +17,7 @@ public class SolarRecipeManager {
         ItemStack outputStack = helmet.getDefaultInstance();
         outputStack.getOrCreateTag().putBoolean("SolarHelmet", true);
 
-        return new SmithingRecipe() {
-            @Override
-            public boolean isTemplateIngredient(ItemStack stack) {
-                return stack.isEmpty();
-            }
-
-            @Override
-            public boolean isBaseIngredient(ItemStack stack) {
-                return stack.is(helmet) && !(stack.hasTag() && stack.getTag().getBoolean("SolarHelmet"));
-            }
-
-            @Override
-            public boolean isAdditionIngredient(ItemStack stack) {
-                return stack.is(SolarHelmet.SOLAR_MODULE_ITEM.get());
-            }
-
-            @Override
-            public boolean matches(Container container, Level level) {
-                return isTemplateIngredient(container.getItem(0)) && isBaseIngredient(container.getItem(1)) && isAdditionIngredient(container.getItem(2));
-            }
-
-            @Override
-            public ItemStack assemble(Container container, RegistryAccess access) {
-                ItemStack assembled = this.getResultItem(access).copy();
-                // copy old nbt to new stack
-                assembled.getOrCreateTag().merge(container.getItem(1).getOrCreateTag());
-                // set solar helmet flag
-                assembled.getOrCreateTag().putBoolean("SolarHelmet", true);
-                return assembled;
-            }
-
-            @Override
-            public ItemStack getResultItem(RegistryAccess access) {
-                return outputStack;
-            }
-
-            @Override
-            public ResourceLocation getId() {
-                return craftingId;
-            }
-
-            @Override
-            public RecipeSerializer<?> getSerializer() {
-                return RecipeSerializer.SMITHING_TRANSFORM;
-            }
-        };
+        return new RecipeModuleAddition(helmet, craftingId, outputStack);
     }
 
     public static Recipe<?> removalRecipe(final Item helmet, final ResourceLocation craftingId){

@@ -1,5 +1,6 @@
 package de.canitzp.solarhelmet;
 
+import de.canitzp.solarhelmet.recipe.RecipeModuleAddition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -59,6 +60,8 @@ public class SolarHelmet{
 
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
     public static final RegistryObject<CreativeModeTab> TAB = TABS.register("tab", SolarHelmetTab::create);
+    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZER = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MODID);
+    public static final RegistryObject<RecipeSerializer<RecipeModuleAddition>> MODULE_ADDITION_SERIALIZER = RECIPE_SERIALIZER.register("module_addition", RecipeModuleAddition.Serializer::new);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     public static final RegistryObject<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
     
@@ -67,6 +70,7 @@ public class SolarHelmet{
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
 
         TABS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        RECIPE_SERIALIZER.register(FMLJavaModLoadingContext.get().getModEventBus());
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
         LOGGER.info("Solar Helmet loaded.");
     }
