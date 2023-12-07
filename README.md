@@ -2,7 +2,8 @@
 
 ## Support
 
-- 1.20.1: supported
+- 1.20.2 - normal updates
+- 1.20.1 - Bugfix only
 - 1.20: unsupported
 - 1.19.4: Bugfix only
 - 1.19.3: unsupported
@@ -12,6 +13,8 @@
 - 1.17.x: unsupported
 - 1.16.x: unsupported
 - 1.15.x: unsupported
+
+Since 1.20.2, NeoForge is the supported modloader.
 
 ## About
 

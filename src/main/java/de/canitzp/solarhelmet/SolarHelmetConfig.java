@@ -2,32 +2,32 @@ package de.canitzp.solarhelmet;
 
 import com.google.common.collect.Lists;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SolarHelmetConfig{
     
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
     public static final General GENERAL = new General(BUILDER);
-    public static final ForgeConfigSpec spec = BUILDER.build();
+    public static final ModConfigSpec spec = BUILDER.build();
 
     public static class General {
-        public final ForgeConfigSpec.ConfigValue<Integer> ENERGY_BASE_VALUE;
-        public final ForgeConfigSpec.ConfigValue<Float> ENERGY_PRODUCTION_MULTIPLIER;
-        public final ForgeConfigSpec.ConfigValue<Double> ENERGY_PRODUCTION_NIGHT_MULTIPLIER;
-        public final ForgeConfigSpec.ConfigValue<Double> ENERGY_PRODUCTION_RAIN_MULTIPLIER;
-        public final ForgeConfigSpec.ConfigValue<Integer> ENERGY_STORAGE;
-        public final ForgeConfigSpec.ConfigValue<List<String>> ADD_CRAFT_ITEMS;
-        public final ForgeConfigSpec.ConfigValue<List<String>> HELMET_BLACKLIST;
-        public final ForgeConfigSpec.ConfigValue<List<String>> HELMET_WHITELIST;
-        public final ForgeConfigSpec.ConfigValue<List<String>> DIMENSION_BLACKLIST;
-        public final ForgeConfigSpec.ConfigValue<List<String>> ADDITIONAL_OPAQUE_BLOCKS;
-        public final ForgeConfigSpec.ConfigValue<List<String>> ADDITIONAL_PARTLY_OPAQUE_BLOCKS;
-        public final ForgeConfigSpec.ConfigValue<List<String>> ADDITIONAL_NON_OPAQUE_BLOCKS;
+        public final ModConfigSpec.ConfigValue<Integer> ENERGY_BASE_VALUE;
+        public final ModConfigSpec.ConfigValue<Float> ENERGY_PRODUCTION_MULTIPLIER;
+        public final ModConfigSpec.ConfigValue<Double> ENERGY_PRODUCTION_NIGHT_MULTIPLIER;
+        public final ModConfigSpec.ConfigValue<Double> ENERGY_PRODUCTION_RAIN_MULTIPLIER;
+        public final ModConfigSpec.ConfigValue<Integer> ENERGY_STORAGE;
+        public final ModConfigSpec.ConfigValue<List<String>> ADD_CRAFT_ITEMS;
+        public final ModConfigSpec.ConfigValue<List<String>> HELMET_BLACKLIST;
+        public final ModConfigSpec.ConfigValue<List<String>> HELMET_WHITELIST;
+        public final ModConfigSpec.ConfigValue<List<String>> DIMENSION_BLACKLIST;
+        public final ModConfigSpec.ConfigValue<List<String>> ADDITIONAL_OPAQUE_BLOCKS;
+        public final ModConfigSpec.ConfigValue<List<String>> ADDITIONAL_PARTLY_OPAQUE_BLOCKS;
+        public final ModConfigSpec.ConfigValue<List<String>> ADDITIONAL_NON_OPAQUE_BLOCKS;
     
-        public General(ForgeConfigSpec.Builder builder) {
+        public General(ModConfigSpec.Builder builder) {
             builder.push("General");
             ENERGY_BASE_VALUE = builder
                 .comment("Base energy production of the helmet.")

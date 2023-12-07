@@ -13,18 +13,18 @@ import net.minecraft.world.level.Level;
 
 public class SolarRecipeManager {
 
-    public static Recipe<?> creationRecipe(final Item helmet, final ResourceLocation craftingId){
+    public static Recipe<?> creationRecipe(final Item helmet){
         ItemStack outputStack = helmet.getDefaultInstance();
         outputStack.getOrCreateTag().putBoolean("SolarHelmet", true);
 
-        return new RecipeModuleAddition(helmet, craftingId, outputStack);
+        return new RecipeModuleAddition(helmet, outputStack);
     }
 
-    public static Recipe<?> removalRecipe(final Item helmet, final ResourceLocation craftingId){
+    public static Recipe<?> removalRecipe(final Item helmet){
         NonNullList<Ingredient> ingredients = NonNullList.create();
         ingredients.add(Ingredient.of(helmet));
         ItemStack outputStack = helmet.getDefaultInstance();
-        return new ShapelessRecipe(craftingId, "", CraftingBookCategory.EQUIPMENT, outputStack, ingredients){
+        return new ShapelessRecipe("", CraftingBookCategory.EQUIPMENT, outputStack, ingredients){
             // copy nbt tag from helmet to new helmet, also delete SolarHelmet tag
             @Override
             public ItemStack assemble(CraftingContainer container, RegistryAccess access) {

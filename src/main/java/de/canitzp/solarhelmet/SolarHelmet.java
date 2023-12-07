@@ -3,8 +3,9 @@ package de.canitzp.solarhelmet;
 import de.canitzp.solarhelmet.recipe.RecipeModuleAddition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -16,7 +17,6 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -24,29 +24,27 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.AnvilRepairEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.neoforge.common.IPlantable;
+import net.neoforged.neoforge.common.capabilities.Capabilities;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.entity.player.AnvilRepairEvent;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * @author canitzp
@@ -59,11 +57,11 @@ public class SolarHelmet{
     private static final Logger LOGGER = LogManager.getLogger(SolarHelmet.MODID);
 
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
-    public static final RegistryObject<CreativeModeTab> TAB = TABS.register("tab", SolarHelmetTab::create);
+    public static final Holder<CreativeModeTab> TAB = TABS.register("tab", SolarHelmetTab::create);
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZER = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MODID);
-    public static final RegistryObject<RecipeSerializer<RecipeModuleAddition>> MODULE_ADDITION_SERIALIZER = RECIPE_SERIALIZER.register("module_addition", RecipeModuleAddition.Serializer::new);
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
-    public static final RegistryObject<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
+    public static final Supplier<RecipeSerializer<RecipeModuleAddition>> MODULE_ADDITION_SERIALIZER = RECIPE_SERIALIZER.register("module_addition", RecipeModuleAddition.Serializer::new);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, MODID);
+    public static final Supplier<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
     
     public SolarHelmet(){
         LOGGER.info("Solar Helmet loading...");
@@ -111,27 +109,27 @@ public class SolarHelmet{
             LOGGER.info("Solar Helmet recipe injecting...");
     
             // list which the old recipes are replaced with. This should include all existing recipes and the new ones, before recipeManager#replaceRecipes is called!
-            List<Recipe<?>> allNewRecipes = new ArrayList<>();
-            for(Item helmet : ForgeRegistries.ITEMS.getValues()){
+            List<RecipeHolder<?>> allNewRecipes = new ArrayList<>();
+            for(Item helmet : BuiltInRegistries.ITEM){
                 if(SolarHelmet.isItemHelmet(helmet)){
-                    ResourceLocation helmetKey = ForgeRegistries.ITEMS.getKey(helmet);
+                    ResourceLocation helmetKey = BuiltInRegistries.ITEM.getKey(helmet);
                     // create recipe id for creation recipe
                     ResourceLocation craftingIdCreation = new ResourceLocation(MODID, "solar_helmet_creation_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
                     // create recipe id for removal recipe
                     ResourceLocation craftingIdRemoval = new ResourceLocation(MODID, "solar_helmet_removal_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
                     // create recipe for creation
-                    Recipe<?> creationRecipe = SolarRecipeManager.creationRecipe(helmet, craftingIdCreation);
+                    Recipe<?> creationRecipe = SolarRecipeManager.creationRecipe(helmet);
                     // create recipe for removal
-                    Recipe<?> removalRecipe = SolarRecipeManager.removalRecipe(helmet, craftingIdRemoval);
+                    Recipe<?> removalRecipe = SolarRecipeManager.removalRecipe(helmet);
 
                     // add creation recipe to recipes list
                     if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingIdCreation))){
-                        allNewRecipes.add(creationRecipe);
+                        allNewRecipes.add(new RecipeHolder<>(craftingIdCreation, creationRecipe));
                         LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmetKey.toString(), craftingIdCreation));
                     }
                     // add removal recipe to recipes list
                     if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingIdRemoval))){
-                        allNewRecipes.add(removalRecipe);
+                        allNewRecipes.add(new RecipeHolder<>(craftingIdRemoval, removalRecipe));
                         LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmetKey.toString(), craftingIdRemoval));
                     }
                 }
@@ -176,7 +174,7 @@ public class SolarHelmet{
                             if(storedEnergy > 0){
                                 AtomicInteger energyLeft = new AtomicInteger(storedEnergy);
                                 for(ItemStack stack : getInventory(event.player)){ // Check if a item can be recharged
-                                    stack.getCapability(ForgeCapabilities.ENERGY).ifPresent(energyStorage -> {
+                                    stack.getCapability(Capabilities.ENERGY).ifPresent(energyStorage -> {
                                         energyLeft.set(energyLeft.get() - energyStorage.receiveEnergy(energyLeft.get(), false));
                                     });
                                     if(energyLeft.get() <= 0){
@@ -194,9 +192,9 @@ public class SolarHelmet{
     
     public static boolean isItemHelmet(Item item){
         if(item instanceof ArmorItem && ((ArmorItem) item).getType().getSlot() == EquipmentSlot.HEAD){
-            return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(ForgeRegistries.ITEMS.getKey(item).toString());
+            return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(BuiltInRegistries.ITEM.getKey(item).toString());
         }
-        return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(ForgeRegistries.ITEMS.getKey(item).toString());
+        return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(BuiltInRegistries.ITEM.getKey(item).toString());
     }
     
     private static boolean isInRightDimension(Player player){
@@ -245,13 +243,13 @@ public class SolarHelmet{
     private static float calculateDirectBlockOpaqueMultiplier(Level level, BlockPos pos){
         BlockState state = level.getBlockState(pos);
 
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_OPAQUE_BLOCKS.get().contains(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString())){
             return 0F;
         }
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_PARTLY_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_PARTLY_OPAQUE_BLOCKS.get().contains(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString())){
             return 1F;
         }
-        if(SolarHelmetConfig.GENERAL.ADDITIONAL_NON_OPAQUE_BLOCKS.get().contains(ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString())){
+        if(SolarHelmetConfig.GENERAL.ADDITIONAL_NON_OPAQUE_BLOCKS.get().contains(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString())){
             return 0F;
         }
         if(state.getBlock() instanceof IPlantable){

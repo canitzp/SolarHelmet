@@ -1,11 +1,11 @@
 package de.canitzp.solarhelmet;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public class SolarHelmetTab {
 
@@ -15,7 +15,7 @@ public class SolarHelmetTab {
                 .title(Component.translatable("tab.solarhelmet"))
                 .displayItems((parameters, output) -> {
                     output.accept(SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance());
-                    for (Item item : ForgeRegistries.ITEMS) {
+                    for (Item item : BuiltInRegistries.ITEM) {
                         if (SolarHelmet.isItemHelmet(item)) {
                             ItemStack stack = new ItemStack(item);
                             CompoundTag tag = new CompoundTag();

@@ -1,3 +1,6 @@
+202.0.0:
+- Update to Minecraft 1.20.2 and migration to NeoForge
+
 47.0.1:
 - Fixed a major bug, where a client can't join any server due to recipe packets not being handled correct
 
