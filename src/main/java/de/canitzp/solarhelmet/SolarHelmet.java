@@ -32,8 +32,9 @@ import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.IPlantable;
-import net.neoforged.neoforge.common.capabilities.Capabilities;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.player.AnvilRepairEvent;
@@ -174,9 +175,10 @@ public class SolarHelmet{
                             if(storedEnergy > 0){
                                 AtomicInteger energyLeft = new AtomicInteger(storedEnergy);
                                 for(ItemStack stack : getInventory(event.player)){ // Check if a item can be recharged
-                                    stack.getCapability(Capabilities.ENERGY).ifPresent(energyStorage -> {
-                                        energyLeft.set(energyLeft.get() - energyStorage.receiveEnergy(energyLeft.get(), false));
-                                    });
+                                    IEnergyStorage capability = stack.getCapability(Capabilities.EnergyStorage.ITEM);
+                                    if(capability != null){
+                                        energyLeft.set(energyLeft.get() - capability.receiveEnergy(energyLeft.get(), false));
+                                    }
                                     if(energyLeft.get() <= 0){
                                         break;
                                     }

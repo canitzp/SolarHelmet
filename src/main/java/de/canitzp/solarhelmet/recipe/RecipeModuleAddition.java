@@ -86,7 +86,7 @@ public class RecipeModuleAddition implements SmithingRecipe {
         @Override
         public void toNetwork(FriendlyByteBuf buffer, RecipeModuleAddition recipe) {
             buffer.writeResourceLocation(BuiltInRegistries.ITEM.getKey(recipe.helmet));
-            buffer.writeItemStack(recipe.outputStack, false);
+            buffer.writeItem(recipe.outputStack);
         }
     }
 
