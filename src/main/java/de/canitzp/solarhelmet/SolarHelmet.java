@@ -27,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
@@ -68,9 +69,11 @@ public class SolarHelmet{
         LOGGER.info("Solar Helmet loading...");
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
 
-        TABS.register(FMLJavaModLoadingContext.get().getModEventBus());
-        RECIPE_SERIALIZER.register(FMLJavaModLoadingContext.get().getModEventBus());
-        ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        IEventBus bus = ModLoadingContext.get().getActiveContainer().getEventBus();
+
+        TABS.register(bus);
+        RECIPE_SERIALIZER.register(bus);
+        ITEMS.register(bus);
         LOGGER.info("Solar Helmet loaded.");
     }
     

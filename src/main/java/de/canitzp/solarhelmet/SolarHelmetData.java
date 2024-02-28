@@ -27,7 +27,7 @@ public class SolarHelmetData {
         ExistingFileHelper helper = event.getExistingFileHelper();
 
         generator.addProvider(event.includeClient(), new ItemModel(generator.getPackOutput(), helper));
-        generator.addProvider(event.includeServer(), new Recipe(generator.getPackOutput(), event.getLookupProvider()));
+        generator.addProvider(event.includeServer(), new Recipe(generator.getPackOutput()));
     }
 
     public static class ItemModel extends ItemModelProvider {
@@ -49,8 +49,8 @@ public class SolarHelmetData {
 
     public static class Recipe extends RecipeProvider {
 
-        public Recipe(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
-            super(output, lookupProvider);
+        public Recipe(PackOutput output) {
+            super(output);
         }
 
         @Override
