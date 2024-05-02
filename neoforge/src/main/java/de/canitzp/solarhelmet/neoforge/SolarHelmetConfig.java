@@ -1,4 +1,4 @@
-package de.canitzp.solarhelmet;
+package de.canitzp.solarhelmet.neoforge;
 
 import com.google.common.collect.Lists;
 import net.minecraft.world.level.Level;

@@ -1,0 +1,9 @@
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:0.14.23"
+    implementation "blue.endless:jankson:1.2.1"
+    //modImplementation "dev.architectury:architectury:${project.architectury_version}"
+}
+
+architectury {
+    common("neoforge")
+}

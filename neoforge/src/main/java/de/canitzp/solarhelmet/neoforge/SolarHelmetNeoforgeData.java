@@ -1,6 +1,5 @@
-package de.canitzp.solarhelmet;
+package de.canitzp.solarhelmet.neoforge;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
@@ -16,10 +15,8 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.CompletableFuture;
-
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = SolarHelmet.MODID)
-public class SolarHelmetData {
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = SolarHelmetNeoForge.MODID)
+public class SolarHelmetNeoforgeData {
 
     @SubscribeEvent
     public static void runData(GatherDataEvent event){
@@ -33,12 +30,12 @@ public class SolarHelmetData {
     public static class ItemModel extends ItemModelProvider {
 
         public ItemModel(PackOutput output, ExistingFileHelper existingFileHelper) {
-            super(output, SolarHelmet.MODID, existingFileHelper);
+            super(output, SolarHelmetNeoForge.MODID, existingFileHelper);
         }
 
         @Override
         protected void registerModels() {
-            this.singleTexture(SolarHelmet.SOLAR_MODULE_ITEM.get());
+            this.singleTexture(SolarHelmetNeoForge.SOLAR_MODULE_ITEM.get());
         }
 
         private void singleTexture(Item item){
@@ -55,7 +52,7 @@ public class SolarHelmetData {
 
         @Override
         protected void buildRecipes(@NotNull RecipeOutput output) {
-            ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, SolarHelmet.SOLAR_MODULE_ITEM.get())
+            ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, SolarHelmetNeoForge.SOLAR_MODULE_ITEM.get())
                     .define('r', Tags.Items.STORAGE_BLOCKS_REDSTONE)
                     .define('l', Tags.Items.GEMS_LAPIS)
                     .define('d', Tags.Items.GEMS_DIAMOND)

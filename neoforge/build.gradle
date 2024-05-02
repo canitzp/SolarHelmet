@@ -1,0 +1,87 @@
+plugins {
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+}
+
+loom {
+    runs {
+        data {
+            data()
+            /*environment("main")*/
+            programArgs '--mod', project.mod_id
+            programArgs '--all'
+            programArgs '--output', project(':common').file('src/main/generated').absolutePath
+            programArgs '--existing', project(':common').file('src/main/resources').absolutePath
+        }
+    }
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentNeoForge.extendsFrom common
+}
+
+architectury {
+    platformSetupLoomIde()
+    neoForge()
+}
+
+repositories {
+    maven { url "https://maven.neoforged.net/" }
+}
+dependencies {
+    neoForge "net.neoforged:neoforge:${project.neoforge_version}"
+
+    compileOnly("org.jetbrains:annotations:24.1.0")
+    forgeDependencies(implementation("blue.endless:jankson:1.2.3"))
+    shadowCommon("blue.endless:jankson:1.2.3")
+    /*modImplementation "dev.architectury:architectury-neoforge:${project.architectury_version}"*/
+
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) {
+        transitive = false
+    }
+}
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            mod_loader: "javafml",
+            loader_version: "${project.valid_forge_versions}",
+            license: "${project.license}",
+            mod_id: "${project.mod_id}",
+            mod_version: "${project.mod_version}",
+            mc_version_range: "${project.mc_version_range}"
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+shadowJar {
+    exclude "fabric.mod.json"
+    exclude "architectury.common.json"
+
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = "dev-shadow"
+}
+
+remapJar {
+    input.set shadowJar.archiveFile
+    dependsOn shadowJar
+}
+
+sourcesJar {
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}

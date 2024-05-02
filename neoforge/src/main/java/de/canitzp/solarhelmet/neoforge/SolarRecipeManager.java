@@ -1,10 +1,9 @@
-package de.canitzp.solarhelmet;
+package de.canitzp.solarhelmet.neoforge;
 
-import de.canitzp.solarhelmet.recipe.RecipeModuleAddition;
+import de.canitzp.solarhelmet.neoforge.recipe.RecipeModuleAddition;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -72,7 +71,7 @@ public class SolarRecipeManager {
             @Override
             public NonNullList<ItemStack> getRemainingItems(CraftingContainer container) {
                 NonNullList<ItemStack> remainingItems = super.getRemainingItems(container);
-                remainingItems.set(0, SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance());
+                remainingItems.set(0, SolarHelmetNeoForge.SOLAR_MODULE_ITEM.get().getDefaultInstance());
                 return remainingItems;
             }
         };

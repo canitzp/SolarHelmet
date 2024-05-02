@@ -1,8 +1,8 @@
-package de.canitzp.solarhelmet.recipe;
+package de.canitzp.solarhelmet.neoforge.recipe;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import de.canitzp.solarhelmet.SolarHelmet;
+import de.canitzp.solarhelmet.neoforge.SolarHelmetNeoForge;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
@@ -37,7 +37,7 @@ public class RecipeModuleAddition implements SmithingRecipe {
 
     @Override
     public boolean isAdditionIngredient(ItemStack stack) {
-        return stack.is(SolarHelmet.SOLAR_MODULE_ITEM.get());
+        return stack.is(SolarHelmetNeoForge.SOLAR_MODULE_ITEM.get());
     }
 
     @Override
@@ -62,7 +62,7 @@ public class RecipeModuleAddition implements SmithingRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return SolarHelmet.MODULE_ADDITION_SERIALIZER.get();
+        return SolarHelmetNeoForge.MODULE_ADDITION_SERIALIZER.get();
     }
 
     public static class Serializer implements RecipeSerializer<RecipeModuleAddition> {

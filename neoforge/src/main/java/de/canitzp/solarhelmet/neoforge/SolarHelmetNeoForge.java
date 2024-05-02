@@ -1,6 +1,9 @@
-package de.canitzp.solarhelmet;
+package de.canitzp.solarhelmet.neoforge;
 
-import de.canitzp.solarhelmet.recipe.RecipeModuleAddition;
+import de.canitzp.solarhelmet.ItemSolarModule;
+import de.canitzp.solarhelmet.Platform;
+import de.canitzp.solarhelmet.SolarHelmetTab;
+import de.canitzp.solarhelmet.neoforge.recipe.RecipeModuleAddition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -32,7 +35,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.IPlantable;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -51,21 +53,20 @@ import java.util.function.Supplier;
 /**
  * @author canitzp
  */
-@Mod(SolarHelmet.MODID)
-public class SolarHelmet{
+@Mod(SolarHelmetNeoForge.MODID)
+public class SolarHelmetNeoForge extends Platform {
     
     public static final String MODID = "solarhelmet";
     
-    private static final Logger LOGGER = LogManager.getLogger(SolarHelmet.MODID);
+    private static final Logger LOGGER = LogManager.getLogger(SolarHelmetNeoForge.MODID);
 
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
     public static final Holder<CreativeModeTab> TAB = TABS.register("tab", SolarHelmetTab::create);
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZER = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MODID);
     public static final Supplier<RecipeSerializer<RecipeModuleAddition>> MODULE_ADDITION_SERIALIZER = RECIPE_SERIALIZER.register("module_addition", RecipeModuleAddition.Serializer::new);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, MODID);
-    public static final Supplier<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
-    
-    public SolarHelmet(){
+
+    public SolarHelmetNeoForge(){
         LOGGER.info("Solar Helmet loading...");
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
 
@@ -76,7 +77,12 @@ public class SolarHelmet{
         ITEMS.register(bus);
         LOGGER.info("Solar Helmet loaded.");
     }
-    
+
+    @Override
+    protected <T extends Item> Supplier<T> registerItem(String id, Supplier<T> item) {
+        return ITEMS.register(id, item);
+    }
+
     @Mod.EventBusSubscriber
     public static class ForgeEvents{
     
@@ -115,7 +121,7 @@ public class SolarHelmet{
             // list which the old recipes are replaced with. This should include all existing recipes and the new ones, before recipeManager#replaceRecipes is called!
             List<RecipeHolder<?>> allNewRecipes = new ArrayList<>();
             for(Item helmet : BuiltInRegistries.ITEM){
-                if(SolarHelmet.isItemHelmet(helmet)){
+                if(SolarHelmetNeoForge.isItemHelmet(helmet)){
                     ResourceLocation helmetKey = BuiltInRegistries.ITEM.getKey(helmet);
                     // create recipe id for creation recipe
                     ResourceLocation craftingIdCreation = new ResourceLocation(MODID, "solar_helmet_creation_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());

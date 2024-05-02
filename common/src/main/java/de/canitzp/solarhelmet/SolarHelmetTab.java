@@ -11,10 +11,10 @@ public class SolarHelmetTab {
 
     public static CreativeModeTab create() {
         return CreativeModeTab.builder()
-                .icon(() -> SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance())
+                .icon(() -> SolarHelmetRegistry.SOLAR_MODULE_ITEM.get().getDefaultInstance())
                 .title(Component.translatable("tab.solarhelmet"))
                 .displayItems((parameters, output) -> {
-                    output.accept(SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance());
+                    output.accept(SolarHelmetRegistry.SOLAR_MODULE_ITEM.get().getDefaultInstance());
                     for (Item item : BuiltInRegistries.ITEM) {
                         if (SolarHelmet.isItemHelmet(item)) {
                             ItemStack stack = new ItemStack(item);
