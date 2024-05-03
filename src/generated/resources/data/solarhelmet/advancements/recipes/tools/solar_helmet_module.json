@@ -5,7 +5,7 @@
       "conditions": {
         "items": [
           {
-            "tag": "forge:gems/diamond"
+            "items": "#c:gems/diamond"
           }
         ]
       },
@@ -28,6 +28,5 @@
     "recipes": [
       "solarhelmet:solar_helmet_module"
     ]
-  },
-  "sends_telemetry_event": false
+  }
 }

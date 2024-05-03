@@ -3,19 +3,19 @@
   "category": "equipment",
   "key": {
     "d": {
-      "tag": "forge:gems/diamond"
+      "tag": "c:gems/diamond"
     },
     "i": {
-      "tag": "forge:ingots/iron"
+      "tag": "c:ingots/iron"
     },
     "l": {
-      "tag": "forge:gems/lapis"
+      "tag": "c:gems/lapis"
     },
     "p": {
       "item": "minecraft:paper"
     },
     "r": {
-      "tag": "forge:storage_blocks/redstone"
+      "tag": "c:storage_blocks/redstone"
     }
   },
   "pattern": [
@@ -24,7 +24,7 @@
     "ipi"
   ],
   "result": {
-    "item": "solarhelmet:solar_helmet_module"
-  },
-  "show_notification": true
+    "count": 1,
+    "id": "solarhelmet:solar_helmet_module"
+  }
 }

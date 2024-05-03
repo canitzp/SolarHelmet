@@ -17,10 +17,8 @@ public class SolarHelmetTab {
                     output.accept(SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance());
                     for (Item item : BuiltInRegistries.ITEM) {
                         if (SolarHelmet.isItemHelmet(item)) {
-                            ItemStack stack = new ItemStack(item);
-                            CompoundTag tag = new CompoundTag();
-                            tag.putBoolean("SolarHelmet", true);
-                            stack.setTag(tag);
+                            ItemStack stack = item.getDefaultInstance();
+                            SolarHelmet.enableSolarHelmet(stack);
                             output.accept(stack);
                         }
                     }

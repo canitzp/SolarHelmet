@@ -1,9 +1,9 @@
 # Solar Helmet
 
 ## Support
-
-- 1.20.4 - normal updates (beta)
-- 1.20.2 - normal updates
+- 1.20.6 - normal updates
+- 1.20.4 - Bugfix only
+- 1.20.2 - Bugfix only
 - 1.20.x: unsupported
 - 1.19.4: Bugfix only
 - 1.19.x: unsupported

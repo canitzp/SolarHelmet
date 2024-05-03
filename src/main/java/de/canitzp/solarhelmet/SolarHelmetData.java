@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
 import net.neoforged.neoforge.common.Tags;
@@ -18,16 +19,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = SolarHelmet.MODID)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, modid = SolarHelmet.MODID)
 public class SolarHelmetData {
 
     @SubscribeEvent
     public static void runData(GatherDataEvent event){
         DataGenerator generator = event.getGenerator();
         ExistingFileHelper helper = event.getExistingFileHelper();
+        CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
 
         generator.addProvider(event.includeClient(), new ItemModel(generator.getPackOutput(), helper));
-        generator.addProvider(event.includeServer(), new Recipe(generator.getPackOutput()));
+        generator.addProvider(event.includeServer(), new Recipe(generator.getPackOutput(), lookupProvider));
     }
 
     public static class ItemModel extends ItemModelProvider {
@@ -49,8 +51,8 @@ public class SolarHelmetData {
 
     public static class Recipe extends RecipeProvider {
 
-        public Recipe(PackOutput output) {
-            super(output);
+        public Recipe(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+            super(output, lookupProvider);
         }
 
         @Override

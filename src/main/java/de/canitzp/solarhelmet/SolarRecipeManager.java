@@ -1,6 +1,7 @@
 package de.canitzp.solarhelmet;
 
 import de.canitzp.solarhelmet.recipe.RecipeModuleAddition;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
@@ -15,7 +16,8 @@ public class SolarRecipeManager {
 
     public static Recipe<?> creationRecipe(final Item helmet){
         ItemStack outputStack = helmet.getDefaultInstance();
-        outputStack.getOrCreateTag().putBoolean("SolarHelmet", true);
+
+        SolarHelmet.enableSolarHelmet(outputStack);
 
         return new RecipeModuleAddition(helmet, outputStack);
     }
@@ -27,7 +29,7 @@ public class SolarRecipeManager {
         return new ShapelessRecipe("", CraftingBookCategory.EQUIPMENT, outputStack, ingredients){
             // copy nbt tag from helmet to new helmet, also delete SolarHelmet tag
             @Override
-            public ItemStack assemble(CraftingContainer container, RegistryAccess access) {
+            public ItemStack assemble(CraftingContainer container, HolderLookup.Provider access) {
                 ItemStack assembled = super.assemble(container, access);
                 ItemStack inputStack = ItemStack.EMPTY;
                 for (int slotId = 0; slotId < container.getContainerSize(); slotId++) {
@@ -37,11 +39,11 @@ public class SolarRecipeManager {
                     }
                 }
                 if(!inputStack.isEmpty()){
-                    if(inputStack.hasTag()){
-                        CompoundTag inputTag = inputStack.getTag();
-                        inputTag.remove("SolarHelmet");
-                        assembled.setTag(inputTag);
+                    if(SolarHelmet.isSolarHelmet(inputStack)){
+                        inputStack.remove(SolarHelmet.DC_SOLAR_HELMET);
                     }
+                    // Copy all components to assembled stack
+                    assembled.applyComponents(inputStack.getComponents());
                 }
                 return assembled;
             }
@@ -63,10 +65,7 @@ public class SolarRecipeManager {
                 if (inputStack.isEmpty()) {
                     return false; // this "should" never happen
                 }
-                if (!inputStack.hasTag()) {
-                    return false;
-                }
-                return inputStack.getTag().getBoolean("SolarHelmet");
+                return SolarHelmet.isSolarHelmet(inputStack);
             }
 
             @Override

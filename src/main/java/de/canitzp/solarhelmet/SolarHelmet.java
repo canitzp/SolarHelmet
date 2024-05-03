@@ -1,15 +1,20 @@
 package de.canitzp.solarhelmet;
 
+import com.mojang.serialization.Codec;
 import de.canitzp.solarhelmet.recipe.RecipeModuleAddition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
@@ -21,6 +26,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,17 +35,19 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.IPlantable;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
-import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.player.AnvilRepairEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,34 +69,68 @@ public class SolarHelmet{
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
     public static final Holder<CreativeModeTab> TAB = TABS.register("tab", SolarHelmetTab::create);
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZER = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MODID);
-    public static final Supplier<RecipeSerializer<RecipeModuleAddition>> MODULE_ADDITION_SERIALIZER = RECIPE_SERIALIZER.register("module_addition", RecipeModuleAddition.Serializer::new);
+    public static final Supplier<RecipeSerializer<RecipeModuleAddition>> MODULE_ADDITION_SERIALIZER = RECIPE_SERIALIZER.register("module_addition", () -> RecipeModuleAddition.Serializer.INSTANCE);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, MODID);
     public static final Supplier<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
-    
-    public SolarHelmet(){
+    public static final DeferredRegister.DataComponents DATA_COMPONENT_TYPE = DeferredRegister.createDataComponents(MODID);
+    public static final Supplier<DataComponentType<Boolean>> DC_SOLAR_HELMET = DATA_COMPONENT_TYPE.registerComponentType("solar_helmet", builder -> builder.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).cacheEncoding());
+    public static final Supplier<DataComponentType<Integer>> DC_SOLAR_HELMET_ENERGY = DATA_COMPONENT_TYPE.registerComponentType("solar_helmet_energy", builder -> builder.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.INT).cacheEncoding());
+
+    public SolarHelmet(IEventBus modEventBus, ModContainer modContainer){
         LOGGER.info("Solar Helmet loading...");
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
 
-        IEventBus bus = ModLoadingContext.get().getActiveContainer().getEventBus();
+        modContainer.registerConfig(ModConfig.Type.COMMON, SolarHelmetConfig.spec);
 
-        TABS.register(bus);
-        RECIPE_SERIALIZER.register(bus);
-        ITEMS.register(bus);
+        DATA_COMPONENT_TYPE.register(modEventBus);
+        ITEMS.register(modEventBus);
+        TABS.register(modEventBus);
+        RECIPE_SERIALIZER.register(modEventBus);
+
         LOGGER.info("Solar Helmet loaded.");
     }
     
-    @Mod.EventBusSubscriber
+    @EventBusSubscriber
     public static class ForgeEvents{
-    
+
+        @SubscribeEvent
+        public static void playerJoin(PlayerEvent.PlayerLoggedInEvent event){
+            Player player = event.getEntity();
+            NonNullList<ItemStack> armorInventory = player.getInventory().armor;
+            NonNullList<ItemStack> mainInventory = player.getInventory().items;
+            NonNullList<ItemStack> offHandInventory = player.getInventory().offhand;
+
+            NonNullList<ItemStack> mergedInventory = NonNullList.create();
+            mergedInventory.addAll(armorInventory);
+            mergedInventory.addAll(mainInventory);
+            mergedInventory.addAll(offHandInventory);
+
+            for(ItemStack stack : mergedInventory){
+                if(stack.has(DataComponents.CUSTOM_DATA)){
+                    CompoundTag tag = stack.get(DataComponents.CUSTOM_DATA).copyTag();
+                    // update from pre 1.20.6 versions
+                    if(tag.contains("SolarHelmet", Tag.TAG_BYTE)){
+                        tag.remove("SolarHelmet");
+                        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                        stack.set(DC_SOLAR_HELMET, true);
+                    }
+                    if(tag.contains("solar_helmet_energy_stored", Tag.TAG_INT)){
+                        int energy = tag.getInt("solar_helmet_energy_stored");
+                        tag.remove("solar_helmet_energy_stored");
+                        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                        stack.set(DC_SOLAR_HELMET_ENERGY, energy);
+                    }
+                }
+            }
+        }
+
         @OnlyIn(Dist.CLIENT)
         @SubscribeEvent(priority = EventPriority.LOWEST)
         public static void renderTooltips(ItemTooltipEvent event){
             if(!event.getItemStack().isEmpty()){
-                CompoundTag nbt = event.getItemStack().getTag();
-                if(nbt != null && nbt.contains("SolarHelmet", Tag.TAG_BYTE)){
+                if(isSolarHelmet(event.getItemStack())){
                     event.getToolTip().add(Component.translatable("item.solarhelmet:solar_helmet_module_installed.text").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
                     if(SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get() > 0){
-                        event.getToolTip().add(Component.translatable("item.solarhelmet:solar_helmet_energy.text", nbt.getInt("solar_helmet_energy_stored"), SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()).withStyle(ChatFormatting.RED));
+                        event.getToolTip().add(Component.translatable("item.solarhelmet:solar_helmet_energy.text", event.getItemStack().getOrDefault(DC_SOLAR_HELMET_ENERGY, 0), SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()).withStyle(ChatFormatting.RED));
                     }
                 }
             }
@@ -148,46 +190,40 @@ public class SolarHelmet{
         }
     
         @SubscribeEvent
-        public static void updatePlayer(TickEvent.PlayerTickEvent event){
-            if(event.phase == TickEvent.Phase.END && !event.player.level().isClientSide()){
-                Inventory inv = event.player.getInventory();
+        public static void updatePlayer(PlayerTickEvent.Post event){
+            if(!event.getEntity().level().isClientSide()){
+                Inventory inv = event.getEntity().getInventory();
                 ItemStack helmet = inv.armor.get(EquipmentSlot.HEAD.getIndex());
-                if(!helmet.isEmpty() && helmet.hasTag() && isItemHelmet(helmet.getItem())){
-                    CompoundTag nbt = helmet.getTag();
-                    if(nbt.contains("SolarHelmet",Tag.TAG_BYTE)){
-                        if(isInRightDimension(event.player)){ // Produce energy
-                            float energyMultiplierBasedOnSunlight = calculateSolarEnergy(event.player.level());
-                            float energyMultiplierBasedOnAboveBlocks = calculateBlockingBlockPenalty(event.player);
+                if(!helmet.isEmpty() && isItemHelmet(helmet.getItem())){
+                    if(isSolarHelmet(helmet)) {
+                        int storedEnergy = helmet.getOrDefault(DC_SOLAR_HELMET_ENERGY, 0);
+                        if (isInRightDimension(event.getEntity())) { // Produce energy
+                            float energyMultiplierBasedOnSunlight = calculateSolarEnergy(event.getEntity().level());
+                            float energyMultiplierBasedOnAboveBlocks = calculateBlockingBlockPenalty(event.getEntity());
                             float energyMultiplierFromConfig = SolarHelmetConfig.GENERAL.ENERGY_PRODUCTION_MULTIPLIER.get();
 
                             int producedEnergy = Math.round(SolarHelmetConfig.GENERAL.ENERGY_BASE_VALUE.get() * energyMultiplierBasedOnSunlight * energyMultiplierBasedOnAboveBlocks * energyMultiplierFromConfig);
 
-                            int energyStored = nbt.getInt("solar_helmet_energy_stored");
-                            if(energyStored < SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()){
-                                int energyToStore = energyStored + producedEnergy;
-                                if(energyToStore > SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()){
-                                    nbt.putInt("solar_helmet_energy_stored", SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get());
-                                }else{
-                                    nbt.putInt("solar_helmet_energy_stored", energyToStore);
-                                }
+                            if (storedEnergy < SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()) {
+                                int energyToStore = Math.max(storedEnergy + producedEnergy, SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()); // cap at configured limit
+                                storedEnergy = energyToStore;
+                                helmet.set(DC_SOLAR_HELMET_ENERGY, energyToStore);
                             }
                         }
-    
-                        if(nbt.contains("solar_helmet_energy_stored", Tag.TAG_INT)){ // Consume energy
-                            int storedEnergy = nbt.getInt("solar_helmet_energy_stored");
-                            if(storedEnergy > 0){
-                                AtomicInteger energyLeft = new AtomicInteger(storedEnergy);
-                                for(ItemStack stack : getInventory(event.player)){ // Check if a item can be recharged
-                                    IEnergyStorage capability = stack.getCapability(Capabilities.EnergyStorage.ITEM);
-                                    if(capability != null){
-                                        energyLeft.set(energyLeft.get() - capability.receiveEnergy(energyLeft.get(), false));
-                                    }
-                                    if(energyLeft.get() <= 0){
-                                        break;
-                                    }
+
+                        // Consume energy
+                        if (storedEnergy > 0) {
+                            AtomicInteger energyLeft = new AtomicInteger(storedEnergy);
+                            for (ItemStack stack : getInventory(event.getEntity())) { // Check if a item can be recharged
+                                IEnergyStorage capability = stack.getCapability(Capabilities.EnergyStorage.ITEM);
+                                if (capability != null) {
+                                    energyLeft.set(energyLeft.get() - capability.receiveEnergy(energyLeft.get(), false));
                                 }
-                                nbt.putInt("solar_helmet_energy_stored", energyLeft.get());
+                                if (energyLeft.get() <= 0) {
+                                    break;
+                                }
                             }
+                            helmet.set(DC_SOLAR_HELMET_ENERGY, energyLeft.get());
                         }
                     }
                 }
@@ -288,19 +324,9 @@ public class SolarHelmet{
         ItemStack inputStack = event.getLeft();
         ItemStack resultStack = event.getOutput();
         
-        if(inputStack.hasTag()){
-            CompoundTag inputStackTag = inputStack.getTag();
-            CompoundTag resultStackTag = resultStack.hasTag() ? resultStack.getTag() : new CompoundTag();
-    
-            if(inputStackTag.contains("SolarHelmet", Tag.TAG_BYTE)){
-                resultStackTag.putBoolean("SolarHelmet", inputStackTag.getBoolean("SolarHelmet"));
-            }
-    
-            if(inputStackTag.contains("solar_helmet_energy_stored", Tag.TAG_INT)){
-                resultStackTag.putInt("solar_helmet_energy_stored", inputStackTag.getInt("solar_helmet_energy_stored"));
-            }
-            
-            resultStack.setTag(resultStackTag);
+        if(inputStack.has(DC_SOLAR_HELMET)){
+            resultStack.set(DC_SOLAR_HELMET, inputStack.get(DC_SOLAR_HELMET));
+            resultStack.set(DC_SOLAR_HELMET_ENERGY, inputStack.getOrDefault(DC_SOLAR_HELMET_ENERGY, 0));
         }
         
     }
@@ -311,6 +337,18 @@ public class SolarHelmet{
         list.addAll(player.getInventory().armor);
         list.addAll(player.getInventory().offhand);
         return list;
+    }
+
+    public static boolean isSolarHelmet(ItemStack stack){
+        return stack.has(DC_SOLAR_HELMET);
+    }
+
+    public static void enableSolarHelmet(ItemStack stack){
+        stack.set(DC_SOLAR_HELMET, true);
+    }
+
+    public static void disableSolarHelmet(ItemStack stack) {
+        stack.remove(DC_SOLAR_HELMET);
     }
     
 }
