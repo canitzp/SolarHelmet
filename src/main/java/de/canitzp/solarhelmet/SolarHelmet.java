@@ -205,7 +205,7 @@ public class SolarHelmet{
                             int producedEnergy = Math.round(SolarHelmetConfig.GENERAL.ENERGY_BASE_VALUE.get() * energyMultiplierBasedOnSunlight * energyMultiplierBasedOnAboveBlocks * energyMultiplierFromConfig);
 
                             if (storedEnergy < SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()) {
-                                int energyToStore = Math.max(storedEnergy + producedEnergy, SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()); // cap at configured limit
+                                int energyToStore = Math.min(storedEnergy + producedEnergy, SolarHelmetConfig.GENERAL.ENERGY_STORAGE.get()); // cap at configured limit
                                 storedEnergy = energyToStore;
                                 helmet.set(DC_SOLAR_HELMET_ENERGY, energyToStore);
                             }
