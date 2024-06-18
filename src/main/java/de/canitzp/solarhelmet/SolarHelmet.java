@@ -160,9 +160,9 @@ public class SolarHelmet{
                 if(SolarHelmet.isItemHelmet(helmet)){
                     ResourceLocation helmetKey = BuiltInRegistries.ITEM.getKey(helmet);
                     // create recipe id for creation recipe
-                    ResourceLocation craftingIdCreation = new ResourceLocation(MODID, "solar_helmet_creation_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
+                    ResourceLocation craftingIdCreation = ResourceLocation.fromNamespaceAndPath(MODID, "solar_helmet_creation_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
                     // create recipe id for removal recipe
-                    ResourceLocation craftingIdRemoval = new ResourceLocation(MODID, "solar_helmet_removal_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
+                    ResourceLocation craftingIdRemoval = ResourceLocation.fromNamespaceAndPath(MODID, "solar_helmet_removal_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
                     // create recipe for creation
                     Recipe<?> creationRecipe = SolarRecipeManager.creationRecipe(helmet);
                     // create recipe for removal

@@ -1,18 +1,18 @@
 # Solar Helmet
 
 ## Support
-- 1.20.6 - normal updates
-- 1.20.4 - Bugfix only
-- 1.20.2 - Bugfix only
-- 1.20.x: unsupported
-- 1.19.4: Bugfix only
-- 1.19.x: unsupported
-- 1.18.x: unsupported
-- 1.17.x: unsupported
-- 1.16.x: unsupported
-- 1.15.x: unsupported
-
-Since 1.20.2, NeoForge is the supported modloader.
+| Version | Modloader | Support-Status |
+|:-------:|:---------:|:--------------:|
+|  1.21   | NeoForge  |       ✅        |
+| 1.20.6  | NeoForge  |       ✅        |
+| 1.20.4  | NeoForge  |       ❌        |
+| 1.20.2  | NeoForge  |       ❌        |
+| 1.20.1  |   Forge   |  Bugfix only   |
+| 1.19.x  |   Forge   |       ❌        |
+| 1.18.x  |   Forge   |       ❌        |
+| 1.17.x  |   Forge   |       ❌        |
+| 1.16.x  |   Forge   |       ❌        |
+| 1.15.x  |   Forge   |       ❌        |
 
 ## About
 

@@ -29,10 +29,10 @@ public class SolarRecipeManager {
         return new ShapelessRecipe("", CraftingBookCategory.EQUIPMENT, outputStack, ingredients){
             // copy nbt tag from helmet to new helmet, also delete SolarHelmet tag
             @Override
-            public ItemStack assemble(CraftingContainer container, HolderLookup.Provider access) {
+            public ItemStack assemble(CraftingInput container, HolderLookup.Provider access) {
                 ItemStack assembled = super.assemble(container, access);
                 ItemStack inputStack = ItemStack.EMPTY;
-                for (int slotId = 0; slotId < container.getContainerSize(); slotId++) {
+                for (int slotId = 0; slotId < container.size(); slotId++) {
                     if(!container.getItem(slotId).isEmpty()){
                         inputStack = container.getItem(slotId).copy();
                         break;
@@ -50,13 +50,13 @@ public class SolarRecipeManager {
 
             // only match if the input helmet has an enabled SolarHelmet module
             @Override
-            public boolean matches(CraftingContainer container, Level level) {
+            public boolean matches(CraftingInput container, Level level) {
                 boolean matches = super.matches(container, level);
                 if(!matches){
                     return false;
                 }
                 ItemStack inputStack = ItemStack.EMPTY;
-                for (int slotId = 0; slotId < container.getContainerSize(); slotId++) {
+                for (int slotId = 0; slotId < container.size(); slotId++) {
                     if(!container.getItem(slotId).isEmpty()){
                         inputStack = container.getItem(slotId);
                         break;
@@ -69,7 +69,7 @@ public class SolarRecipeManager {
             }
 
             @Override
-            public NonNullList<ItemStack> getRemainingItems(CraftingContainer container) {
+            public NonNullList<ItemStack> getRemainingItems(CraftingInput container) {
                 NonNullList<ItemStack> remainingItems = super.getRemainingItems(container);
                 remainingItems.set(0, SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance());
                 return remainingItems;
