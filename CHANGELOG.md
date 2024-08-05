@@ -1,3 +1,6 @@
+210.0.1:
+- Fix possible crash, caused by the renaming of IPlantable to SpecialPlantable
+
 210.0.0:
 - Update to 1.21
 
