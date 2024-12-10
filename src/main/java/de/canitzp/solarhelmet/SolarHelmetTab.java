@@ -16,7 +16,7 @@ public class SolarHelmetTab {
                 .displayItems((parameters, output) -> {
                     output.accept(SolarHelmet.SOLAR_MODULE_ITEM.get().getDefaultInstance());
                     for (Item item : BuiltInRegistries.ITEM) {
-                        if (SolarHelmet.isItemHelmet(item)) {
+                        if (SolarHelmet.isItemHelmet(item.getDefaultInstance())) {
                             ItemStack stack = item.getDefaultInstance();
                             SolarHelmet.enableSolarHelmet(stack);
                             output.accept(stack);

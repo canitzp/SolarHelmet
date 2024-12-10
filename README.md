@@ -1,18 +1,19 @@
 # Solar Helmet
 
 ## Support
-| Version | Modloader | Support-Status |
-|:-------:|:---------:|:--------------:|
-|  1.21   | NeoForge  |       ✅        |
-| 1.20.6  | NeoForge  |       ✅        |
-| 1.20.4  | NeoForge  |       ❌        |
-| 1.20.2  | NeoForge  |       ❌        |
-| 1.20.1  |   Forge   |  Bugfix only   |
-| 1.19.x  |   Forge   |       ❌        |
-| 1.18.x  |   Forge   |       ❌        |
-| 1.17.x  |   Forge   |       ❌        |
-| 1.16.x  |   Forge   |       ❌        |
-| 1.15.x  |   Forge   |       ❌        |
+|    Version    | Modloader | Support-Status |
+|:-------------:|:---------:|:--------------:|
+|    1.21.3     | NeoForge  |       ✅        |
+| 1.21 / 1.21.1 | NeoForge  |       ✅        |
+|    1.20.6     | NeoForge  |  bugfix-only   |
+|    1.20.4     | NeoForge  |       ❌        |
+|    1.20.2     | NeoForge  |       ❌        |
+|    1.20.1     |   Forge   |  bugfix-only   |
+|    1.19.x     |   Forge   |       ❌        |
+|    1.18.x     |   Forge   |       ❌        |
+|    1.17.x     |   Forge   |       ❌        |
+|    1.16.x     |   Forge   |       ❌        |
+|    1.15.x     |   Forge   |       ❌        |
 
 ## About
 
@@ -23,9 +24,14 @@ The energy is internally stored and automatically applied to any item in you inv
 The helmet itself can't be used as battery and the only way to extract the energy is by putting a energy consuming one, eg.: a battery, in your inventory.  
 The helmet has no transfer limit, so it can be discharged as fast as possible (the real transfer rate depends on the energy consumer).
 
-Since 40.2.0/43.2.0/45.2.0 you craft the helmet and the module together in the smithing table. You now also can uncraft it, by putting the helmet in any crafting grid.
-
 ![creative_tab](https://raw.githubusercontent.com/canitzp/SolarHelmet/master/readme/creative_tab.png)
+
+#### Crafting
+|     Version     |                                  How                                  |
+|:---------------:|:---------------------------------------------------------------------:|
+|    >= 1.21.3    | Right click with the feeder module, while wearing the desired helmet. |
+| 1.19.4 - 1.21.1 |         Craft module and helmet together in a smiting table.          |
+|    <= 1.19.4    |  Craft module and helmet together in any crafting grid (shapeless).   |
 
 ### Solar production
 Since version 40.1.0 (1.18.2 backport) and 45.1.0, a new calculation is used for determining a multiplier based on daytime.

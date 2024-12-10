@@ -1,12 +1,13 @@
 package de.canitzp.solarhelmet;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import de.canitzp.solarhelmet.recipe.RecipeModuleAddition;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,10 +16,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -28,6 +26,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
@@ -41,17 +40,18 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.SpecialPlantable;
+import net.neoforged.neoforge.energy.ComponentEnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.event.entity.player.AnvilRepairEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -68,10 +68,9 @@ public class SolarHelmet{
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
     public static final Holder<CreativeModeTab> TAB = TABS.register("tab", SolarHelmetTab::create);
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZER = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MODID);
-    public static final Supplier<RecipeSerializer<RecipeModuleAddition>> MODULE_ADDITION_SERIALIZER = RECIPE_SERIALIZER.register("module_addition", () -> RecipeModuleAddition.Serializer.INSTANCE);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, MODID);
     public static final Supplier<ItemSolarModule> SOLAR_MODULE_ITEM = ITEMS.register("solar_helmet_module", ItemSolarModule::new);
-    public static final DeferredRegister.DataComponents DATA_COMPONENT_TYPE = DeferredRegister.createDataComponents(MODID);
+    public static final DeferredRegister.DataComponents DATA_COMPONENT_TYPE = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, MODID);
     public static final Supplier<DataComponentType<Boolean>> DC_SOLAR_HELMET = DATA_COMPONENT_TYPE.registerComponentType("solar_helmet", builder -> builder.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).cacheEncoding());
     public static final Supplier<DataComponentType<Integer>> DC_SOLAR_HELMET_ENERGY = DATA_COMPONENT_TYPE.registerComponentType("solar_helmet_energy", builder -> builder.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.INT).cacheEncoding());
 
@@ -136,64 +135,11 @@ public class SolarHelmet{
         }
     
         @SubscribeEvent
-        public static void resourceReload(AddReloadListenerEvent event){
-            event.addListener(new SimplePreparableReloadListener<RecipeManager>() {
-                @Override
-                protected RecipeManager prepare(ResourceManager iResourceManager, ProfilerFiller iProfiler){
-                    return event.getServerResources().getRecipeManager();
-                }
-            
-                @Override
-                protected void apply(RecipeManager recipeManager, ResourceManager iResourceManager, ProfilerFiller iProfiler){
-                    createHelmetRecipes(recipeManager);
-                }
-            });
-        }
-    
-        private static void createHelmetRecipes(RecipeManager recipeManager){
-            LOGGER.info("Solar Helmet recipe injecting...");
-    
-            // list which the old recipes are replaced with. This should include all existing recipes and the new ones, before recipeManager#replaceRecipes is called!
-            List<RecipeHolder<?>> allNewRecipes = new ArrayList<>();
-            for(Item helmet : BuiltInRegistries.ITEM){
-                if(SolarHelmet.isItemHelmet(helmet)){
-                    ResourceLocation helmetKey = BuiltInRegistries.ITEM.getKey(helmet);
-                    // create recipe id for creation recipe
-                    ResourceLocation craftingIdCreation = ResourceLocation.fromNamespaceAndPath(MODID, "solar_helmet_creation_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
-                    // create recipe id for removal recipe
-                    ResourceLocation craftingIdRemoval = ResourceLocation.fromNamespaceAndPath(MODID, "solar_helmet_removal_" + helmetKey.getNamespace() + "_" + helmetKey.getPath());
-                    // create recipe for creation
-                    Recipe<?> creationRecipe = SolarRecipeManager.creationRecipe(helmet);
-                    // create recipe for removal
-                    Recipe<?> removalRecipe = SolarRecipeManager.removalRecipe(helmet);
-
-                    // add creation recipe to recipes list
-                    if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingIdCreation))){
-                        allNewRecipes.add(new RecipeHolder<>(craftingIdCreation, creationRecipe));
-                        LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmetKey.toString(), craftingIdCreation));
-                    }
-                    // add removal recipe to recipes list
-                    if(recipeManager.getRecipeIds().noneMatch(resourceLocation -> resourceLocation.equals(craftingIdRemoval))){
-                        allNewRecipes.add(new RecipeHolder<>(craftingIdRemoval, removalRecipe));
-                        LOGGER.info(String.format("Solar Helmet created recipe for %s with id '%s'", helmetKey.toString(), craftingIdRemoval));
-                    }
-                }
-            }
-            try{
-                // add all existing recipes, since we're gonna replace them
-                allNewRecipes.addAll(recipeManager.getRecipes());
-                recipeManager.replaceRecipes(allNewRecipes);
-            } catch(IllegalStateException e){
-                LOGGER.error("Solar Helmet: Illegal recipe replacement caught! Report this to author immediately!", e);
-            }
-        }
-    
-        @SubscribeEvent
         public static void updatePlayer(PlayerTickEvent.Post event){
             if(!event.getEntity().level().isClientSide()){
                 Inventory inv = event.getEntity().getInventory();
                 ItemStack helmet = inv.armor.get(EquipmentSlot.HEAD.getIndex());
-                if(!helmet.isEmpty() && isItemHelmet(helmet.getItem())){
+                if(!helmet.isEmpty() && isItemHelmet(helmet)){
                     if(isSolarHelmet(helmet)) {
                         int storedEnergy = helmet.getOrDefault(DC_SOLAR_HELMET_ENERGY, 0);
                         if (isInRightDimension(event.getEntity())) { // Produce energy
@@ -228,13 +174,42 @@ public class SolarHelmet{
                 }
             }
         }
+
+        @SubscribeEvent
+        public static void onPlayerRightClicks(PlayerInteractEvent.RightClickItem event) {
+            ItemStack heldStack = event.getItemStack();
+            if (isItemHelmet(heldStack)) {
+                // remove all modules from helmet
+                if (event.getEntity().isShiftKeyDown() && isSolarHelmet(heldStack)) {
+                    event.setCanceled(true);
+                    disableSolarHelmet(heldStack);
+                    event.getEntity().displayClientMessage(Component.translatable("item.solarhelmet:solar_helmet_module_removing_done.text"), true);
+                    if (!event.getEntity().addItem(SOLAR_MODULE_ITEM.get().getDefaultInstance())) {
+                        event.getEntity().drop(SOLAR_MODULE_ITEM.get().getDefaultInstance(), false);
+                    }
+                }
+            } else {
+                ItemStack helmetStack = event.getEntity().getInventory().getArmor(EquipmentSlot.HEAD.getIndex());
+                // add module to wear helmet
+                if (isItemHelmet(helmetStack) && !isSolarHelmet(heldStack)) {
+                    if(heldStack.is(SOLAR_MODULE_ITEM.get())){
+                        enableSolarHelmet(helmetStack);
+                        if (!event.getEntity().isCreative()) {
+                            heldStack.shrink(1);
+                        }
+                        event.setCancellationResult(InteractionResult.SUCCESS);
+                        event.getEntity().displayClientMessage(Component.translatable("item.solarhelmet:solar_helmet_module_applying_done.text"), true);
+                    }
+                }
+            }
+        }
     }
     
-    public static boolean isItemHelmet(Item item){
-        if(item instanceof ArmorItem && ((ArmorItem) item).getType().getSlot() == EquipmentSlot.HEAD){
-            return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(BuiltInRegistries.ITEM.getKey(item).toString());
+    public static boolean isItemHelmet(ItemStack stack){
+        if(stack.getItem() instanceof ArmorItem && stack.get(DataComponents.EQUIPPABLE).slot() == EquipmentSlot.HEAD){
+            return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
         }
-        return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(BuiltInRegistries.ITEM.getKey(item).toString());
+        return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
     }
     
     private static boolean isInRightDimension(Player player){

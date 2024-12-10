@@ -1,7 +1,10 @@
 package de.canitzp.solarhelmet;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -15,8 +18,8 @@ import java.util.List;
  */
 public class ItemSolarModule extends Item {
 
-    public ItemSolarModule(){
-        super(new Properties().stacksTo(1));
+    public ItemSolarModule(ResourceLocation id) {
+        super(new Properties().setId(ResourceKey.create(Registries.ITEM, id)).useItemDescriptionPrefix().stacksTo(1));
     }
 
     @Override

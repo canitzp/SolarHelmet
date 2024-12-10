@@ -1,7 +1,7 @@
 plugins {
     id "java-library"
     id "idea"
-    id 'net.neoforged.gradle.userdev' version '7.0.+'
+    id 'net.neoforged.gradle.userdev' version '7.0.171'
     //id 'org.parchmentmc.librarian.forgegradle' version '1.+'
     id "com.modrinth.minotaur" version "2.+"
     id 'net.darkhax.curseforgegradle' version '1.+'
@@ -16,8 +16,6 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
-
-//minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
 
 subsystems {
     parchment {
@@ -39,7 +37,7 @@ runs {
     server {
         workingDirectory project.file('run_server')
         systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-        programArgument '--nogui'
+        arguments.add '--nogui'
     }
     gameTestServer {
         workingDirectory project.file('run_gametest')
@@ -47,7 +45,7 @@ runs {
     }
     data {
         workingDirectory project.file('run_data')
-        programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        arguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
     }
 }
 

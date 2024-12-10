@@ -1,3 +1,9 @@
+213.0.0: UNRELEASED DUE TO A MINECRAFT BUG WHILE IN CREATIVE MODE
+- Update to 1.21.3
+- New module application procedure:
+  - To install module, right-click the module in world, while wearing the helmet
+  - To remove, shift-right-click the helmet in world
+
 210.0.1:
 - Fix possible crash, caused by the renaming of IPlantable to SpecialPlantable
 
