@@ -1,3 +1,6 @@
+218.0.0 (2025-09-30):
+- Update to 1.21.8
+
 213.0.0: UNRELEASED DUE TO A MINECRAFT BUG WHILE IN CREATIVE MODE
 - Update to 1.21.3
 - New module application procedure:

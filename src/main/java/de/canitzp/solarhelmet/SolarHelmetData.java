@@ -1,53 +1,39 @@
 package de.canitzp.solarhelmet;
 
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.ItemModelGenerators;
+import net.minecraft.client.data.models.ModelProvider;
+import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.*;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
-import net.neoforged.neoforge.common.data.internal.NeoForgeRecipeProvider;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, modid = SolarHelmet.MODID)
+@EventBusSubscriber(modid = SolarHelmet.MODID)
 public class SolarHelmetData {
 
     @SubscribeEvent
-    public static void runData(GatherDataEvent event){
-        DataGenerator generator = event.getGenerator();
-        ExistingFileHelper helper = event.getExistingFileHelper();
-        CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
-
-        generator.addProvider(event.includeClient(), new ItemModel(generator.getPackOutput(), helper));
-        event.createProvider(event.includeServer(), Recipe.Runner::new);
+    public static void runData(GatherDataEvent.Client event){
+        event.createProvider(ItemModel::new);
+        event.createProvider(Recipe.Runner::new);
     }
 
-    public static class ItemModel extends ItemModelProvider {
+    public static class ItemModel extends ModelProvider {
 
-        public ItemModel(PackOutput output, ExistingFileHelper existingFileHelper) {
-            super(output, SolarHelmet.MODID, existingFileHelper);
+        public ItemModel(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+            super(output, SolarHelmet.MODID);
         }
 
         @Override
-        protected void registerModels() {
-            this.singleTexture(SolarHelmet.SOLAR_MODULE_ITEM.get());
-        }
-
-        private void singleTexture(Item item){
-            ResourceLocation key = BuiltInRegistries.ITEM.getKey(item);
-            singleTexture(key.getPath(), mcLoc("item/handheld"), "layer0", modLoc("item/" + key.getPath()));
+        protected void registerModels(BlockModelGenerators blockModels, ItemModelGenerators itemModels) {
+            itemModels.generateFlatItem(SolarHelmet.SOLAR_MODULE_ITEM.get(), ModelTemplates.FLAT_ITEM);
         }
     }
 

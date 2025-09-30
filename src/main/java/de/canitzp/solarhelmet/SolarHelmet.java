@@ -20,13 +20,12 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.StandingAndWallBlockItem;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.crafting.*;
-import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
@@ -40,10 +39,8 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.SpecialPlantable;
-import net.neoforged.neoforge.energy.ComponentEnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
-import net.neoforged.neoforge.event.PlayLevelSoundEvent;
-import net.neoforged.neoforge.event.entity.player.AnvilRepairEvent;
+import net.neoforged.neoforge.event.entity.player.AnvilCraftEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -92,27 +89,22 @@ public class SolarHelmet{
 
         @SubscribeEvent
         public static void playerJoin(PlayerEvent.PlayerLoggedInEvent event){
-            Player player = event.getEntity();
-            NonNullList<ItemStack> armorInventory = player.getInventory().armor;
-            NonNullList<ItemStack> mainInventory = player.getInventory().items;
-            NonNullList<ItemStack> offHandInventory = player.getInventory().offhand;
-
             NonNullList<ItemStack> mergedInventory = NonNullList.create();
-            mergedInventory.addAll(armorInventory);
-            mergedInventory.addAll(mainInventory);
-            mergedInventory.addAll(offHandInventory);
+            for (ItemStack itemStack : event.getEntity().getInventory()) {
+                mergedInventory.add(itemStack);
+            }
 
             for(ItemStack stack : mergedInventory){
                 if(stack.has(DataComponents.CUSTOM_DATA)){
                     CompoundTag tag = stack.get(DataComponents.CUSTOM_DATA).copyTag();
                     // update from pre 1.20.6 versions
-                    if(tag.contains("SolarHelmet", Tag.TAG_BYTE)){
+                    if(tag.contains("SolarHelmet")){
                         tag.remove("SolarHelmet");
                         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
                         stack.set(DC_SOLAR_HELMET, true);
                     }
-                    if(tag.contains("solar_helmet_energy_stored", Tag.TAG_INT)){
-                        int energy = tag.getInt("solar_helmet_energy_stored");
+                    if(tag.contains("solar_helmet_energy_stored")){
+                        int energy = tag.getIntOr("solar_helmet_energy_stored", 0);
                         tag.remove("solar_helmet_energy_stored");
                         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
                         stack.set(DC_SOLAR_HELMET_ENERGY, energy);
@@ -121,7 +113,6 @@ public class SolarHelmet{
             }
         }
 
-        @OnlyIn(Dist.CLIENT)
         @SubscribeEvent(priority = EventPriority.LOWEST)
         public static void renderTooltips(ItemTooltipEvent event){
             if(!event.getItemStack().isEmpty()){
@@ -137,8 +128,7 @@ public class SolarHelmet{
         @SubscribeEvent
         public static void updatePlayer(PlayerTickEvent.Post event){
             if(!event.getEntity().level().isClientSide()){
-                Inventory inv = event.getEntity().getInventory();
-                ItemStack helmet = inv.armor.get(EquipmentSlot.HEAD.getIndex());
+                ItemStack helmet = getHelmet(event.getEntity());
                 if(!helmet.isEmpty() && isItemHelmet(helmet)){
                     if(isSolarHelmet(helmet)) {
                         int storedEnergy = helmet.getOrDefault(DC_SOLAR_HELMET_ENERGY, 0);
@@ -189,7 +179,7 @@ public class SolarHelmet{
                     }
                 }
             } else {
-                ItemStack helmetStack = event.getEntity().getInventory().getArmor(EquipmentSlot.HEAD.getIndex());
+                ItemStack helmetStack = getHelmet(event.getEntity());
                 // add module to wear helmet
                 if (isItemHelmet(helmetStack) && !isSolarHelmet(heldStack)) {
                     if(heldStack.is(SOLAR_MODULE_ITEM.get())){
@@ -204,12 +194,21 @@ public class SolarHelmet{
             }
         }
     }
-    
+
     public static boolean isItemHelmet(ItemStack stack){
-        if(stack.getItem() instanceof ArmorItem && stack.get(DataComponents.EQUIPPABLE).slot() == EquipmentSlot.HEAD){
-            return !SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        if(SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())){
+            return true;
         }
-        return SolarHelmetConfig.GENERAL.HELMET_WHITELIST.get().contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        if(SolarHelmetConfig.GENERAL.HELMET_BLACKLIST.get().contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())){
+            return false;
+        }
+        if(stack.getItem() instanceof StandingAndWallBlockItem){ // Heads
+            return false;
+        }
+        if(!stack.has(DataComponents.EQUIPPABLE)){
+            return false;
+        }
+        return stack.get(DataComponents.EQUIPPABLE).slot() == EquipmentSlot.HEAD;
     }
     
     private static boolean isInRightDimension(Player player){
@@ -294,7 +293,7 @@ public class SolarHelmet{
     
     // copy solar helmet tag and energy stored to new stack
     @SubscribeEvent
-    public static void anvilRepair(AnvilRepairEvent event){
+    public static void anvilRepair(AnvilCraftEvent.Pre event){
         ItemStack inputStack = event.getLeft();
         ItemStack resultStack = event.getOutput();
         
@@ -306,11 +305,11 @@ public class SolarHelmet{
     }
     
     public static NonNullList<ItemStack> getInventory(Player player){
-        NonNullList<ItemStack> list = NonNullList.create();
-        list.addAll(player.getInventory().items);
-        list.addAll(player.getInventory().armor);
-        list.addAll(player.getInventory().offhand);
-        return list;
+        NonNullList<ItemStack> mergedInventory = NonNullList.create();
+        for (ItemStack itemStack : player.getInventory()) {
+            mergedInventory.add(itemStack);
+        }
+        return mergedInventory;
     }
 
     public static boolean isSolarHelmet(ItemStack stack){
@@ -324,5 +323,9 @@ public class SolarHelmet{
     public static void disableSolarHelmet(ItemStack stack) {
         stack.remove(DC_SOLAR_HELMET);
     }
-    
+
+    public static ItemStack getHelmet(Player player){
+        return player.getInventory().getItem(Inventory.INVENTORY_SIZE + EquipmentSlot.HEAD.getIndex());
+    }
+
 }
